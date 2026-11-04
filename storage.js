@@ -138,6 +138,7 @@ const CloudAdapter = {
       if (error) throw error;
       if (this.pending === data) this.pending = null;
       Cloud.setStatus('synced');
+      window.dispatchEvent(new Event('acyz:synced'));
     } catch (e) {
       console.warn('No se pudo subir a la nube; se reintentará', e);
       Cloud.setStatus(navigator.onLine ? 'error' : 'offline');

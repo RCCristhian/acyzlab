@@ -39,7 +39,7 @@ const Pin = (() => {
       root.id = 'pin-lock';
       document.body.appendChild(root);
       document.body.classList.add('no-scroll');
-      let code = '', busy = false, fails = 0, lockedUntil = 0;
+      let code = '', busy = false, fails = 0, lockedUntil = 0, human = false;
       root.innerHTML = `
         <div class="pin-card" role="dialog" aria-modal="true" aria-labelledby="pin-title">
           <div class="pin-handle"></div>
@@ -84,7 +84,7 @@ const Pin = (() => {
         fails++;
         root.classList.add('error');
         msg.textContent = text;
-        if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) try { navigator.vibrate([60, 40, 60]); } catch { /* */ }
+        if (human && navigator.vibrate) try { navigator.vibrate([60, 40, 60]); } catch { /* */ }
         await wait(500);
         root.classList.remove('error');
         code = ''; input.value = ''; busy = false; paint();
@@ -110,7 +110,7 @@ const Pin = (() => {
             const s = 4 + Math.random() * 7;
             return `<i style="--dx:${(Math.cos(a) * r).toFixed(1)}px;--dy:${(Math.sin(a) * r).toFixed(1)}px;--c:${c};width:${s.toFixed(1)}px;height:${s.toFixed(1)}px;border-radius:${Math.random() < .5 ? '50%' : '2px'};animation-delay:${Math.floor(Math.random() * 90)}ms"></i>`;
           }).join('');
-          if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) try { navigator.vibrate(40); } catch { /* */ }
+          if (human && navigator.vibrate) try { navigator.vibrate(40); } catch { /* */ }
           await wait(500);
         } else {
           root.classList.add('merge', 'burst');
@@ -123,7 +123,8 @@ const Pin = (() => {
         resolve(code);
       }
 
-      async function onInput() {
+      async function onInput(e) {
+        if (e && e.isTrusted) human = true;
         if (busy) { input.value = code; return; }
         if (Date.now() < lockedUntil) { input.value = ''; return; }
         msg.textContent = '';

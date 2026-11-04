@@ -126,7 +126,7 @@
     tab = t;
     tabbar.hidden = false;
     $$('.tab', tabbar).forEach(b => b.classList.toggle('active', b.dataset.tab === t));
-    ({ hoy: viewHoy, plan: viewPlan, progreso: viewProgreso, perfil: viewPerfil })[t]();
+    ({ hoy: viewHoy, plan: viewPlan, progreso: viewProgreso, amigos: viewAmigos, perfil: viewPerfil })[t]();
     window.scrollTo(0, 0);
   }
   tabbar.addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) go(b.dataset.tab); });
@@ -359,6 +359,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     tabbar.hidden = true; app.innerHTML = '';
     await requirePin();
     go('hoy');
+    publishSoon();
   }
 
   // ---------- Código de 4 dígitos ----------
@@ -506,7 +507,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
             const cls = s ? (done.has(s.index) ? 'done' : 'plan') : '';
             return `<span class="dot ${cls} ${i === todayIdx() ? 'today' : ''}" title="${d}">${d[0]}</span>`;
           }).join('')}</div>
-          <div class="row small muted"><span>Racha: <b>${streakWeeks()}</b> semanas cumplidas</span><span>Nivel de poder ${Math.round((p.intensity || 1) * 100)}%</span></div>
+          <div class="row small muted"><span>Racha: <b>${streakWeeks()}</b> semanas cumplidas</span><span>Poder <b>${powerOf().toLocaleString('es')}</b></span></div>
         </div>
         ${next ? sessionCard(next, p, { eyebrow, hero: true, open: true }) : `
           <article class="card hero-card center">
@@ -517,10 +518,39 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       </section>`;
   }
 
+  // ---------- Poder (estilo shonen) ----------
+  function weekCount(k) { return Store.history.filter(h => h.weekKey === k).length; }
+  function powerOf() {
+    const h = Store.history;
+    const minutes = h.reduce((t, x) => t + (x.minutes || 0), 0);
+    const base = 100 + h.length * 120 + minutes * 8 + streakWeeks() * 300 + weekCount(weekKeyOf()) * 50;
+    return Math.round(base * ((Store.profile && Store.profile.intensity) || 1));
+  }
+  function buildStats() {
+    const p = Store.profile || {};
+    const h = Store.history;
+    const r = rankOf(h.length);
+    return {
+      power: powerOf(), rank: r.letter, rankTitle: r.title,
+      sessions: h.length, minutes: h.reduce((t, x) => t + (x.minutes || 0), 0),
+      streak: streakWeeks(), week: weekCount(weekKeyOf()), weekTarget: p.days || 0,
+      intensity: p.intensity || 1, goal: p.goal || '', level: p.level || 0,
+      recent: h.slice(-5).reverse().map(x => ({ t: x.title, d: x.date, m: x.minutes, f: x.feedback })),
+      lastAt: h.length ? h[h.length - 1].date : null,
+    };
+  }
+  let publishTimer = null;
+  function publishSoon() {
+    if (!Cloud.user || !Store.profile) return;
+    clearTimeout(publishTimer);
+    publishTimer = setTimeout(() => Social.publish(buildStats(), Store.settings.nickname).catch(() => {}), 500);
+  }
+  window.addEventListener('acyz:synced', publishSoon);
+
   function rankHTML() {
     const r = rankOf(Store.history.length);
     return `<div class="card rank"><div class="rank-letter">${r.letter}</div><div class="rank-info">
-      <small>Rango</small><b>${esc(r.title)}</b>
+      <small>Rango · Poder ${powerOf().toLocaleString('es')}</small><b>${esc(r.title)}</b>
       <div class="bar"><i style="width:${r.pct}%"></i></div>
       <span class="small muted">${r.next ? `${r.left} ${r.left === 1 ? 'sesión' : 'sesiones'} para el rango ${r.next}` : 'Rango máximo. Eres imparable.'}</span></div></div>`;
   }
@@ -674,7 +704,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
           <button class="btn primary" data-action="edit-profile">Editar mis datos</button>
         </div>
         <div class="card">
-          <h3>Nivel de poder: ${Math.round((p.intensity || 1) * 100)}%</h3>
+          <h3>Intensidad: ${Math.round((p.intensity || 1) * 100)}%</h3>
           <p class="muted small">Sube o baja sola según respondas «¿cómo te fue?» al terminar cada sesión.</p>
           <button class="btn ghost small" data-action="reset-intensity">Volver al 100%</button>
         </div>
@@ -713,6 +743,156 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       <button class="btn primary" data-action="auth-open">Entrar o crear cuenta</button></div>`;
   }
   Cloud.onStatus(st => { const el = $('#sync-status'); if (el) el.textContent = SYNC_TEXT[st] || ''; });
+
+  // ---------- Amigos ----------
+  const GOAL_SHORT = { grasa: 'Perder grasa', musculo: 'Ganar músculo', fuerza: 'Fuerza', resistencia: 'Resistencia', forma: 'En forma' };
+  let social = null;
+  const fmtN = n => Number(n || 0).toLocaleString('es');
+  const initial = name => esc((name || '?').trim().charAt(0).toUpperCase());
+
+  async function viewAmigos() {
+    if (!Cloud.enabled || !Cloud.user) {
+      app.innerHTML = `<section><h1 class="hero">Amigos</h1>
+        <div class="card center"><h3>Entrena junto a tus amigos</h3>
+          <p class="muted">Para añadir amigos y competir en el ranking de poder necesitas una cuenta.</p>
+          ${Cloud.enabled ? '<button class="btn primary" data-action="auth-open">Entrar o crear cuenta</button>' : ''}</div></section>`;
+      return;
+    }
+    app.innerHTML = `<section><h1 class="hero">Amigos</h1><div class="card"><p class="muted">Cargando a tus rivales…</p></div></section>`;
+    try {
+      await Social.publish(buildStats(), Store.settings.nickname);
+      social = await Social.load();
+    } catch (e) {
+      console.warn(e);
+      app.innerHTML = `<section><h1 class="hero">Amigos</h1><div class="card"><h3>Sin conexión</h3>
+        <p class="muted">No pudimos cargar tus amigos. Revisa tu internet e inténtalo de nuevo.</p>
+        <button class="btn ghost" data-action="tab" data-tab="amigos">Reintentar</button></div></section>`;
+      return;
+    }
+    if (tab !== 'amigos') return;
+    const mine = { profile: social.me || { user_id: Cloud.user.id, display_name: Social.displayNameOf(Cloud.user, Store.settings.nickname), stats: buildStats() }, isMe: true };
+    mine.profile.stats = buildStats();
+    const ranking = [mine, ...social.friends].sort((a, b) => (b.profile.stats.power || 0) - (a.profile.stats.power || 0));
+    const myPos = ranking.indexOf(mine) + 1;
+    app.innerHTML = `
+      <section>
+        <h1 class="hero">Amigos</h1>
+        <div class="speed quote-card"><p>${social.friends.length
+          ? (myPos === 1 ? '«Estás en la cima. Ahora todos van a por ti.»' : `«Vas ${myPos}.º de ${ranking.length}. Tu rival te espera: ¡supéralo!»`)
+          : '«Un verdadero guerrero necesita rivales. ¡Invita a tus amigos!»'}</p></div>
+
+        <div class="card">
+          <h3>Ranking de poder</h3>
+          <ol class="ranking">${ranking.map((x, i) => {
+            const s = x.profile.stats || {};
+            return `<li class="${x.isMe ? 'me' : ''}" ${x.isMe ? '' : `data-action="vs" data-id="${x.id}" role="button" tabindex="0"`}>
+              <span class="pos">${i + 1}</span>
+              <span class="avatar">${initial(x.profile.display_name)}</span>
+              <span class="who"><b>${esc(x.profile.display_name)}${x.isMe ? ' (tú)' : ''}</b><small>Rango ${esc(s.rank || 'E')} · ${fmtN(s.week)} esta semana · racha ${fmtN(s.streak)}</small></span>
+              <span class="pow"><b>${fmtN(s.power)}</b><small>poder</small></span>
+            </li>`;
+          }).join('')}</ol>
+          ${social.friends.length ? '<p class="muted small">Toca a un amigo para ver el cara a cara.</p>' : ''}
+        </div>
+
+        ${social.incoming.length ? `<div class="card"><h3>Solicitudes recibidas</h3><ul class="history">${social.incoming.map(x => `
+          <li><div><b>${esc(x.profile.display_name)}</b><small>${esc(x.profile.email || '')} quiere ser tu rival</small></div>
+            <span class="row-btns"><button class="btn primary small" data-action="friend-accept" data-id="${x.id}">Aceptar</button>
+            <button class="link" data-action="friend-remove" data-id="${x.id}" aria-label="Rechazar">×</button></span></li>`).join('')}</ul></div>` : ''}
+
+        <div class="card">
+          <h3>Añadir amigo</h3>
+          <p class="muted small">Escribe el correo con el que tu amigo entró en Acyz Lab (el de Google o el que registró).</p>
+          <form id="friend-form" class="kg-row">
+            <input name="email" type="email" inputmode="email" autocomplete="off" placeholder="correo@ejemplo.com" aria-label="Correo de tu amigo" required>
+            <button class="btn primary small">Buscar</button>
+          </form>
+          <div id="friend-result"></div>
+          ${social.outgoing.length ? `<p class="small muted" style="margin-top:12px">Esperando respuesta:</p><ul class="history">${social.outgoing.map(x => `
+            <li><div><b>${esc(x.profile.display_name)}</b><small>Solicitud enviada</small></div>
+              <button class="link-btn" data-action="friend-remove" data-id="${x.id}">Cancelar</button></li>`).join('')}</ul>` : ''}
+        </div>
+
+        <div class="card">
+          <h3>Tu nombre de luchador</h3>
+          <form id="nick-form" class="kg-row">
+            <input name="nick" maxlength="40" value="${esc(mine.profile.display_name)}" aria-label="Tu nombre de luchador">
+            <button class="btn ghost small">Guardar</button>
+          </form>
+          <p class="muted small">Así te verán tus amigos en el ranking.</p>
+        </div>
+        <button class="btn ghost block" data-action="tab" data-tab="amigos">Actualizar</button>
+      </section>`;
+  }
+
+  function vsRow(label, a, b, fmt = fmtN, higherWins = true) {
+    const win = a === b ? 0 : ((a > b) === higherWins ? 1 : 2);
+    return `<div class="vs-row"><b class="${win === 1 ? 'win' : ''}">${fmt(a)}</b><span>${label}</span><b class="${win === 2 ? 'win' : ''}">${fmt(b)}</b></div>`;
+  }
+  function openVs(id) {
+    const f = social && social.friends.find(x => String(x.id) === String(id));
+    if (!f) return;
+    const a = buildStats(), b = f.profile.stats || {};
+    const myName = esc(Social.displayNameOf(Cloud.user, Store.settings.nickname));
+    const name = esc(f.profile.display_name);
+    const verdict = a.power === b.power ? '¡Empate de poder! El próximo entreno decide.'
+      : a.power > b.power ? `¡Tu poder supera al de ${name}! Mantén el ritmo.` : `¡${name} lleva ventaja! Entrena para superar su poder.`;
+    const ov = document.createElement('div');
+    ov.id = 'vs-screen'; ov.className = 'speed burst'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML = `
+      <div class="vs-wrap">
+        <button class="icon-btn vs-close" data-action="vs-close" aria-label="Cerrar">${ICON.close}</button>
+        <div class="vs-head">
+          <div><span class="avatar big">${initial(myName)}</span><b>${myName}</b><small>Rango ${esc(a.rank)}</small></div>
+          <em>VS</em>
+          <div><span class="avatar big rival">${initial(name)}</span><b>${name}</b><small>Rango ${esc(b.rank || 'E')}</small></div>
+        </div>
+        <div class="vs-power"><b class="${a.power >= b.power ? 'win' : ''}">${fmtN(a.power)}</b><span>PODER</span><b class="${(b.power || 0) >= a.power ? 'win' : ''}">${fmtN(b.power)}</b></div>
+        <div class="vs-table">
+          ${vsRow('Sesiones esta semana', a.week, b.week || 0)}
+          ${vsRow('Sesiones en total', a.sessions, b.sessions || 0)}
+          ${vsRow('Minutos entrenados', a.minutes, b.minutes || 0)}
+          ${vsRow('Racha (semanas)', a.streak, b.streak || 0)}
+          ${vsRow('Intensidad', a.intensity, b.intensity || 1, v => Math.round((v || 1) * 100) + '%')}
+        </div>
+        <p class="vs-verdict">${verdict}</p>
+        <div class="card vs-recent"><h3>Últimas clases de ${name}</h3>
+          ${(b.recent || []).length ? `<ul class="history">${b.recent.map(r => `<li><div><b>${esc(r.t)}</b><small>${esc(fmtDate(r.d))} · ${fmtN(r.m)} min</small></div><span class="badge feel-${esc(r.f)}">${FEEL[r.f] || ''}</span></li>`).join('')}</ul>`
+            : '<p class="muted small">Todavía no ha terminado ninguna sesión.</p>'}
+          ${b.goal ? `<p class="muted small">Objetivo: ${esc(GOAL_SHORT[b.goal] || b.goal)}</p>` : ''}
+        </div>
+        <button class="link-btn vs-remove" data-action="friend-remove" data-id="${f.id}" data-confirm="1">Quitar de amigos</button>
+      </div>`;
+    document.body.appendChild(ov);
+    document.body.classList.add('no-scroll');
+  }
+  function closeVs() { $('#vs-screen')?.remove(); document.body.classList.remove('no-scroll'); }
+
+  app.addEventListener('submit', async e => {
+    if (e.target.id === 'friend-form') {
+      e.preventDefault();
+      const out = $('#friend-result');
+      const email = String(new FormData(e.target).get('email') || '').trim().toLowerCase();
+      if (!/^\S+@\S+\.\S+$/.test(email)) { out.innerHTML = '<p class="error">Escribe un correo válido.</p>'; return; }
+      if (email === (Cloud.user.email || '').toLowerCase()) { out.innerHTML = '<p class="error">Ese eres tú. ¡Tu rival más difícil!</p>'; return; }
+      out.innerHTML = '<p class="muted small">Buscando…</p>';
+      try {
+        const found = await Social.find(email);
+        if (!found) { out.innerHTML = '<p class="muted small">No encontramos a nadie con ese correo. Pídele que entre primero en Acyz Lab con su cuenta.</p>'; return; }
+        const already = [...social.friends, ...social.incoming, ...social.outgoing].find(x => x.profile.user_id === found.user_id);
+        out.innerHTML = `<div class="found"><span class="avatar">${initial(found.display_name)}</span><b>${esc(found.display_name)}</b>
+          ${already ? '<span class="badge">Ya conectados</span>' : `<button class="btn primary small" data-action="friend-add" data-uid="${found.user_id}">Agregar</button>`}</div>`;
+      } catch (err) { console.warn(err); out.innerHTML = '<p class="error">No se pudo buscar. Revisa tu conexión.</p>'; }
+    }
+    if (e.target.id === 'nick-form') {
+      e.preventDefault();
+      const nick = String(new FormData(e.target).get('nick') || '').trim().slice(0, 40);
+      Store.saveSettings({ nickname: nick });
+      await Social.publish(buildStats(), nick).catch(() => {});
+      toast('Nombre de luchador guardado.');
+      viewAmigos();
+    }
+  });
 
   // ---------- Modo entrenamiento ----------
   const W = { steps: [], i: 0, remaining: 0, running: false, endAt: 0, timer: null, startedAt: 0, session: null, lock: null, audio: null, lastBeep: null };
@@ -967,6 +1147,20 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
         break;
       }
       case 'auth-open': authMode = 'entrar'; renderAuth(); break;
+      case 'vs': openVs(el.dataset.id); break;
+      case 'vs-close': closeVs(); break;
+      case 'friend-add':
+        el.disabled = true;
+        Social.request(el.dataset.uid).then(() => { toast('¡Solicitud enviada! Cuando acepte, aparecerá en tu ranking.'); viewAmigos(); })
+          .catch(err => { el.disabled = false; console.warn(err); toast('No se pudo enviar la solicitud.'); });
+        break;
+      case 'friend-accept':
+        Social.accept(el.dataset.id).then(() => { toast('¡Nuevo rival en tu ranking!'); viewAmigos(); }).catch(() => toast('No se pudo aceptar.'));
+        break;
+      case 'friend-remove':
+        if (el.dataset.confirm && !confirm('¿Quitar a este amigo? Dejaréis de ver vuestro progreso.')) break;
+        Social.remove(el.dataset.id).then(() => { closeVs(); viewAmigos(); }).catch(() => toast('No se pudo completar.'));
+        break;
       case 'logout':
         if (confirm('¿Cerrar sesión? Tu progreso queda guardado en tu cuenta.')) {
           Cloud.signOut().then(() => { authMode = 'entrar'; renderAuth('Sesión cerrada.'); });
