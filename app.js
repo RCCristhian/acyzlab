@@ -330,6 +330,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
           ${signup ? '' : '<button class="link-btn" data-action="auth-forgot">Olvidé mi contraseña</button>'}
         </div>
         <button class="btn ghost block" data-action="auth-local">Seguir sin cuenta (solo en este dispositivo)</button>
+        <p class="muted small center legal-links">Al continuar aceptas las <a href="terminos.html">condiciones de uso</a> y la <a href="privacidad.html">política de privacidad</a>.</p>
       </section>`;
   }
   function renderNewPassword(msg = '') {
@@ -694,6 +695,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
           <button class="btn danger" data-action="wipe">Borrar mis datos</button>
         </div>
         <p class="muted small center">Acyz Lab · versión 1 · ${Cloud.user ? 'tus datos se guardan en tu cuenta' : 'tus datos se guardan en este dispositivo'}</p>
+        <p class="muted small center legal-links"><a href="privacidad.html">Privacidad</a> · <a href="terminos.html">Condiciones</a></p>
       </section>`;
   }
 

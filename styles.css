@@ -394,3 +394,5 @@ h2, .card h3 { font-style: italic; text-transform: uppercase; letter-spacing: .0
 #pin-lock.error .pin-box { border-color: #ff3b30; animation: pin-shake .4s; }
 @keyframes pin-shake { 20%, 60% { translate: -7px 0; } 40%, 80% { translate: 7px 0; } }
 @media (max-width: 340px) { .pin-card { padding-inline: 12px; } }
+
+.legal-links a { color: var(--accent-text); font-weight: 600; }
