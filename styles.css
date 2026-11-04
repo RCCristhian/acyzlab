@@ -439,3 +439,106 @@ h2, .card h3 { font-style: italic; text-transform: uppercase; letter-spacing: .0
 .vs-verdict { text-align: center; font-size: 1.15rem; font-weight: 900; font-style: italic; margin: 16px 0; }
 .vs-recent { margin-top: 4px; }
 .vs-remove { display: block; margin: 8px auto 0; color: var(--muted); }
+
+.equip-title { margin: 14px 0 6px; font-weight: 800; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.equip .grid2 .equip-item { padding: 10px 12px; margin: 0; }
+
+/* ---------- Fotos reales de ejercicios ---------- */
+.photo { position: relative; overflow: hidden; border-radius: 14px; background: #111; aspect-ratio: 3 / 2; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photo img + img { animation: photo-swap 2.6s ease-in-out infinite; }
+@keyframes photo-swap { 0%, 38% { opacity: 0; } 50%, 88% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .photo img + img { animation: photo-swap 5s steps(1) infinite; } }
+.anim-box.photo { width: 100%; max-width: 360px; height: auto; padding: 0; margin: 4px auto 10px; border: 0; }
+.w-anim.photo { width: 100%; max-width: 420px; height: auto; margin: 4px auto 6px; }
+.w-anim.photo.mini { max-width: 240px; opacity: .9; }
+#workout.work .w-timer { width: min(40vw, 170px); }
+@media (max-height: 760px) { .w-anim.photo { max-width: 330px; } }
+
+/* ---------- Ventanas del sistema (misiones y estado) ---------- */
+.sys {
+  position: relative; margin: 0 0 16px; padding: 16px; border-radius: 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 9%, var(--surface)), var(--surface) 60%);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 16%, transparent), inset 0 0 22px color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.sys::before, .sys::after { content: ''; position: absolute; width: 16px; height: 16px; border: 2px solid var(--accent); pointer-events: none; }
+.sys::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-top-left-radius: 10px; }
+.sys::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-bottom-right-radius: 10px; }
+.card.sys { border-radius: 10px; }
+.hero-card.sys { border-width: 1px; }
+.sys-tag {
+  display: inline-block; margin: 0 0 10px; padding: 4px 14px; font-size: .7rem; font-weight: 900; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--accent-text); background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+}
+.reward { margin: 4px 0 8px; font-size: .85rem; color: var(--muted); }
+.reward b { color: var(--accent-text); }
+.reward.big { font-size: 1rem; font-weight: 700; color: var(--text); }
+.status-top { display: flex; align-items: center; gap: 12px; }
+.status-id { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.status-id b { font-size: 1.15rem; font-weight: 900; font-style: italic; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status-id small, .status-lv small, .stat-grid small { font-size: .66rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.status-lv { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+.status-lv b { font-size: 2.2rem; font-weight: 900; font-style: italic; line-height: 1; color: var(--accent-text); }
+.xp { margin: 10px 0 6px; }
+.xp .bar { margin: 0 0 4px; }
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+.stat-grid div { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); border-radius: 8px; background: color-mix(in srgb, var(--accent) 4%, transparent); }
+.stat-grid b { font-size: 1.25rem; font-weight: 900; }
+.quest-tasks { list-style: none; padding: 0; margin: 8px 0; }
+.quest-tasks li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px dashed color-mix(in srgb, var(--accent) 30%, var(--line)); }
+.quest-tasks li.done .quest-name { text-decoration: line-through; color: var(--muted); }
+.quest-name { flex: 1; }
+.quest-check { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 6px; border: 2px solid var(--accent); background: transparent; color: var(--accent-ink); cursor: pointer; }
+.quest-tasks li.done .quest-check { background: var(--accent); }
+.quest-check svg { width: 18px; height: 18px; }
+.quest-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--accent); transform: rotate(45deg); flex: none; }
+.sys.quest.done { border-color: color-mix(in srgb, var(--ok) 60%, transparent); }
+.sys.quest.failed { opacity: .7; }
+#quest-popup { position: fixed; inset: 0; z-index: 85; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, .65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); animation: pop-in .3s ease-out; }
+.quest-pop { width: 100%; max-width: 380px; background: var(--surface); }
+.quest-pop h2 { font-size: 1.3rem; }
+.center-btns { justify-content: center; margin-top: 12px; }
+@keyframes pop-in { from { opacity: 0; transform: scale(.96); } }
+#workout.finish .sys-tag { margin-bottom: 6px; }
+
+/* ---------- Toda la app como interfaz de juego (ventanas del sistema) ---------- */
+body {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px; background-attachment: fixed;
+}
+.card, .stat {
+  position: relative; border-radius: 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, var(--surface)), var(--surface) 55%);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.card::before, .card::after { content: ''; position: absolute; width: 12px; height: 12px; border: 2px solid color-mix(in srgb, var(--accent) 80%, transparent); pointer-events: none; }
+.card::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-top-left-radius: 10px; }
+.card::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-bottom-right-radius: 10px; }
+.card > h3:first-child, .card > .session-head h3 { letter-spacing: .04em; }
+.card > h3:first-child::before { content: '▸ '; color: var(--accent-text); }
+.stat.accent { background: var(--accent); }
+.choice, .equip-item { border-radius: 10px; border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
+.choice:has(input:checked) { box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 25%, transparent); }
+.tabbar { border-top: 1px solid color-mix(in srgb, var(--accent) 50%, var(--line)); box-shadow: 0 -6px 18px color-mix(in srgb, var(--accent) 10%, transparent); }
+.topbar { border-bottom-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.hero { letter-spacing: .01em; }
+.eyebrow { letter-spacing: .16em; }
+.bar { background: color-mix(in srgb, var(--accent) 10%, var(--surface-2)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent); }
+.bar i { box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent); }
+#workout { background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px; }
+/* que el modo entrenamiento quepa entero con foto */
+#workout.work .w-body { padding: 6px 0; gap: 2px; justify-content: flex-start; }
+#workout.work .w-name { font-size: clamp(1.4rem, 6.5vw, 2.2rem); margin-bottom: 2px; }
+#workout.work .w-anim.photo { max-width: min(100%, 360px); max-height: 30vh; aspect-ratio: auto; height: 30vh; }
+#workout.work .w-reps { margin: 6px 0; }
+#workout.work .w-reps b { font-size: clamp(3.2rem, 17vw, 5rem); }
+#workout.work .tip { margin: 4px 0; font-size: .85rem; }
+#workout .w-controls { padding-top: 6px; }

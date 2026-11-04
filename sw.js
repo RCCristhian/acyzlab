@@ -1,8 +1,8 @@
 /* Service worker: guarda la app para que funcione sin internet.
    Al cambiar cualquier archivo, sube el número de VERSION. */
-const VERSION = 'acyzlab-v15';
+const VERSION = 'acyzlab-v17';
 const FILES = [
-  './', 'index.html', 'styles.css', 'config.js', 'vendor/supabase.js', 'storage.js', 'pin.js', 'social.js', 'exercises.js', 'animations.js', 'generator.js', 'app.js', 'manifest.json',
+  './', 'index.html', 'styles.css', 'config.js', 'vendor/supabase.js', 'storage.js', 'pin.js', 'social.js', 'exercises.js', 'animations.js', 'generator.js', 'leveling.js', 'app.js', 'manifest.json',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png',
 ];
 

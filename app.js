@@ -63,12 +63,22 @@
     return { letter, title, next: next ? next[1] : null, left: next ? next[0] - n : 0, pct: next ? Math.round((n - from) / (next[0] - from) * 100) : 100 };
   }
   const equipSummary = p => {
-    const eq = [];
-    if (p.equipment.mancuernas.length) eq.push(`Mancuernas (${p.equipment.mancuernas.slice().sort((a, b) => a - b).join(', ')} kg)`);
-    if (p.equipment.pesarusa.length) eq.push(`Pesa rusa (${p.equipment.pesarusa.slice().sort((a, b) => a - b).join(', ')} kg)`);
-    ['barra', 'banda', 'cuerda'].forEach(k => p.equipment[k] && eq.push(EQUIPMENT_NAMES[k]));
+    const e = p.equipment || {}, eq = [];
+    if ((e.mancuernas || []).length) eq.push(`Mancuernas (${e.mancuernas.slice().sort((a, b) => a - b).join(', ')} kg)`);
+    if ((e.pesarusa || []).length) eq.push(`Pesa rusa (${e.pesarusa.slice().sort((a, b) => a - b).join(', ')} kg)`);
+    if (Number(e.barradisco) > 0) eq.push(`Barra con discos (hasta ${e.barradisco} kg)`);
+    if (Number(e.barraz) > 0) eq.push(`Barra Z (hasta ${e.barraz} kg)`);
+    EQUIP_CHECKS.forEach(k => e[k] && eq.push(EQUIPMENT_NAMES[k]));
     return eq.length ? eq.join(', ') : 'Solo peso corporal';
   };
+  // equipo que se marca con una casilla (sin pesos)
+  const EQUIP_GROUPS = [
+    ['Para apoyarte o colgarte', ['rack', 'banco', 'cajon', 'barra', 'paralelas', 'trx']],
+    ['Accesorios', ['banda', 'cuerda', 'rodillo', 'balon', 'fitball', 'saco']],
+    ['Máquinas', ['poleas', 'maqpiernas', 'bici', 'cinta', 'eliptica', 'remoergo']],
+  ];
+  const EQUIP_CHECKS = EQUIP_GROUPS.flatMap(g => g[1]);
+  const emptyEquipment = () => Object.assign({ mancuernas: [], pesarusa: [], barradisco: 0, barraz: 0 }, Object.fromEntries(EQUIP_CHECKS.map(k => [k, false])));
 
   // ---------- Tema ----------
   function applyTheme() {
@@ -83,7 +93,7 @@
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 
   // ---------- Plan de la semana ----------
-  const profileStamp = p => JSON.stringify([p.goal, p.level, p.days, p.minutes, p.equipment, p.space, p.limits]);
+  const profileStamp = p => JSON.stringify([p.goal, p.level, p.days, p.minutes, p.equipment, p.space, p.limits, p.style, p.stamina, p.bodyType]);
 
   function ensurePlan(forceSalt) {
     const p = Store.profile;
@@ -150,12 +160,35 @@
     3: ['Mucho espacio', 'Puedo correr varios metros: patio, garaje, parque'],
   };
   const LIMIT_INFO = { rodillas: 'Rodillas', espalda: 'Espalda', hombros: 'Hombros' };
+  const ACTIVITY_INFO = {
+    1: ['Sedentario', 'Paso casi todo el día sentado'],
+    2: ['Algo activo', 'Camino un rato cada día'],
+    3: ['Activo', 'Estoy mucho de pie o me muevo bastante'],
+    4: ['Muy activo', 'Trabajo físico o deporte casi a diario'],
+  };
+  const BODY_INFO = {
+    subir: ['Me cuesta subir de peso', 'Como y no engordo ni gano músculo fácilmente'],
+    normal: ['Ni mucho ni poco', 'Subo o bajo según lo que haga'],
+    bajar: ['Me cuesta bajar de peso', 'Gano grasa con facilidad'],
+  };
+  const SLEEP_INFO = { 1: 'Menos de 6 h', 2: '6 a 7 h', 3: '7 a 9 h' };
+  const STAMINA_INFO = {
+    1: ['Me canso rápido', 'Subir tres pisos de escaleras ya me deja sin aire'],
+    2: ['Aguante normal', 'Puedo trotar unos 10 minutos'],
+    3: ['Mucho aguante', 'Corro 30 minutos o más sin problema'],
+  };
+  const STYLE_INFO = {
+    fuerza: ['Fuerza bruta', 'Quiero levantar más y ser más fuerte'],
+    velocidad: ['Velocidad', 'Quiero ser rápido, ágil y explosivo'],
+    equilibrio: ['Equilibrio', 'Un poco de todo, sin descuidar nada'],
+  };
 
   let draft = null, wStep = 0, wEditing = false;
   const defaultDraft = () => ({
     goal: null, age: '', sex: null, weight: '', height: '', level: null, days: 3, minutes: 30,
-    equipment: { mancuernas: [], pesarusa: [], barra: false, banda: false, cuerda: false },
+    equipment: emptyEquipment(),
     space: null, limits: [], maxPushups: '', maxSquats: '', bodyFat: '', intensity: 1,
+    activity: null, bodyType: null, sleep: null, stamina: null, style: null,
   });
 
   const choice = (name, val, title, sub, checked) => `
@@ -186,7 +219,21 @@
         if (!(draft.height >= 120 && draft.height <= 230)) return 'Escribe tu estatura en cm.';
         return '';
       } },
-    { title: '¿Con qué nivel de poder empiezas?', sub: 'Y cuánto tiempo le darás al entrenamiento. Podrás cambiarlo cuando quieras.',
+    { key: 'origen', title: 'Tu historia de origen', sub: 'Todo protagonista tiene un pasado. Cuéntanos cómo es el tuyo.',
+      body: () => `
+        <div class="field"><span>¿Cómo es tu vida fuera del entrenamiento?</span></div>
+        <div class="choices">${Object.entries(ACTIVITY_INFO).map(([k, [t, s]]) => choice('activity', k, t, s, +draft.activity === +k)).join('')}</div>
+        <div class="field"><span>¿Cómo responde tu cuerpo?</span></div>
+        <div class="choices">${Object.entries(BODY_INFO).map(([k, [t, s]]) => choice('bodyType', k, t, s, draft.bodyType === k)).join('')}</div>
+        <div class="field"><span>¿Cuántas horas duermes normalmente?</span><div class="chips">${Object.entries(SLEEP_INFO).map(([k, t]) => chip('sleep', k, t, +draft.sleep === +k)).join('')}</div></div>`,
+      read: f => {
+        draft.activity = +f.get('activity'); draft.bodyType = f.get('bodyType'); draft.sleep = +f.get('sleep');
+        if (!draft.activity) return 'Cuéntanos cómo es tu día a día.';
+        if (!draft.bodyType) return 'Elige cómo responde tu cuerpo.';
+        if (!draft.sleep) return 'Dinos cuánto duermes.';
+        return '';
+      } },
+    { key: 'nivel', title: '¿Con qué nivel de poder empiezas?', sub: 'Y cuánto tiempo le darás al entrenamiento. Podrás cambiarlo cuando quieras.',
       body: () => `
         <div class="choices">${Object.entries(LEVEL_INFO).map(([k, [t, s]]) => choice('level', k, t, s, +draft.level === +k)).join('')}</div>
         <div class="field"><span>Días por semana</span><div class="chips">${[2, 3, 4, 5, 6].map(d => chip('days', d, d, +draft.days === d)).join('')}</div></div>
@@ -195,9 +242,21 @@
         draft.level = +f.get('level'); draft.days = +f.get('days'); draft.minutes = +f.get('minutes');
         return draft.level ? '' : 'Elige tu nivel.';
       } },
-    { title: 'Tu arsenal en casa', sub: 'Marca solo lo que tengas: nunca te pondremos ejercicios con equipo que no marcaste. Sin nada también se puede entrenar.',
+    { key: 'estilo', title: 'Tu estilo de lucha', sub: 'Cada guerrero entrena a su manera.',
+      body: () => `
+        <div class="field"><span>¿Cuánto aguantas sin parar?</span></div>
+        <div class="choices">${Object.entries(STAMINA_INFO).map(([k, [t, s]]) => choice('stamina', k, t, s, +draft.stamina === +k)).join('')}</div>
+        <div class="field"><span>¿Qué poder quieres despertar?</span></div>
+        <div class="choices">${Object.entries(STYLE_INFO).map(([k, [t, s]]) => choice('style', k, t, s, draft.style === k)).join('')}</div>`,
+      read: f => {
+        draft.stamina = +f.get('stamina'); draft.style = f.get('style');
+        if (!draft.stamina) return 'Dinos cuánto aguantas.';
+        return draft.style ? '' : 'Elige tu estilo de lucha.';
+      } },
+    { key: 'equipo', title: 'Tu arsenal', sub: 'Marca solo lo que tengas: nunca te pondremos ejercicios con equipo que no marcaste. Sin nada también se puede entrenar.',
       body: () => `
         <div class="equip">
+          <p class="equip-title">Pesas</p>
           ${['mancuernas', 'pesarusa'].map(k => `
             <div class="equip-item ${draft.equipment[k].length ? 'on' : ''}" data-equip="${k}">
               <b>${k === 'mancuernas' ? 'Mancuernas' : 'Pesas rusas (kettlebell)'}</b>
@@ -206,18 +265,24 @@
                 <button type="button" class="btn small" data-action="kg-add" data-key="${k}">Añadir</button></div>
               <div class="kg-list">${kgChips(k)}</div>
             </div>`).join('')}
-          ${[['barra', 'Barra de dominadas'], ['banda', 'Banda elástica'], ['cuerda', 'Cuerda de saltar']].map(([k, t]) =>
-            `<label class="choice check"><input type="checkbox" name="${k}" ${draft.equipment[k] ? 'checked' : ''}><span><b>${t}</b></span></label>`).join('')}
+          <div class="grid2">
+            ${[['barradisco', 'Barra con discos', 'Peso máximo que puedes cargar (barra + discos)'], ['barraz', 'Barra Z', 'Peso máximo con discos']].map(([k, t, h]) => `
+              <label class="field equip-item ${Number(draft.equipment[k]) > 0 ? 'on' : ''}"><span>${t}</span>
+                <div class="unit"><input name="${k}" type="number" inputmode="decimal" step="2.5" min="0" max="400" placeholder="No tengo" value="${Number(draft.equipment[k]) > 0 ? draft.equipment[k] : ''}"><em>kg</em></div>
+                <small>${h}</small></label>`).join('')}
+          </div>
+          ${EQUIP_GROUPS.map(([g, keys]) => `<p class="equip-title">${g}</p>
+            <div class="chips">${keys.map(k => chip(k, 'on', EQUIPMENT_NAMES[k], !!draft.equipment[k], 'checkbox')).join('')}</div>`).join('')}
         </div>`,
       read: f => {
         ['mancuernas', 'pesarusa'].forEach(k => {
           const v = parseFloat(($(`[data-kg-input="${k}"]`)?.value || '').replace(',', '.'));
           if (v > 0 && v <= 100 && !draft.equipment[k].includes(v)) draft.equipment[k].push(v);
         });
-        ['barra', 'banda', 'cuerda'].forEach(k => { draft.equipment[k] = f.get(k) === 'on'; });
+        readEquipChecks(f);
         return '';
       } },
-    { title: 'Tu campo de entrenamiento', sub: '¿Cuánto espacio tienes? Así no te tocan piques ni zancadas si no caben.',
+    { key: 'espacio', title: 'Tu campo de entrenamiento', sub: '¿Cuánto espacio tienes? Así no te tocan piques ni zancadas si no caben.',
       body: () => `<div class="choices">${Object.entries(SPACE_INFO).map(([k, [t, s]]) => choice('space', k, t, s, +draft.space === +k)).join('')}</div>`,
       read: f => { draft.space = +f.get('space'); return draft.space ? '' : 'Elige cuánto espacio tienes.'; } },
     { title: 'Análisis avanzado', sub: 'Opcional, para un plan más exacto. Puedes dejarlo en blanco y seguir.', optional: true,
@@ -251,13 +316,22 @@
       <p class="muted small">Calculado con ${esc(m.formula)}. Proteína orientativa: unos ${m.protein} g al día.</p>`;
   }
 
+  function readEquipChecks(f) {
+    EQUIP_CHECKS.forEach(k => { draft.equipment[k] = f.get(k) === 'on'; });
+    ['barradisco', 'barraz'].forEach(k => {
+      if (!f.has(k)) return;
+      const v = parseFloat(String(f.get(k) || '').replace(',', '.'));
+      draft.equipment[k] = v > 0 && v <= 400 ? v : 0;
+    });
+  }
   let wReturn = 'perfil';
   function startWizard(edit, step = 0) {
     wEditing = !!edit;
     wReturn = tab;
     draft = edit ? JSON.parse(JSON.stringify(Store.profile)) : defaultDraft();
     draft.limits = draft.limits || [];
-    wStep = step;
+    draft.equipment = Object.assign(emptyEquipment(), draft.equipment || {});
+    wStep = typeof step === 'string' ? Math.max(0, WIZ.findIndex(w => w.key === step)) : step;
     renderWizard();
   }
   function renderWizard(error = '') {
@@ -295,6 +369,7 @@
   });
   function saveDraft() {
     const p = Object.assign({}, draft);
+    if (!wEditing && p.sleep === 1) p.intensity = 0.9; // con poco sueño, empezamos más suave
     p.intensity = p.intensity || 1;
     p.updatedAt = new Date().toISOString();
     Store.saveProfile(p);
@@ -360,6 +435,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     await requirePin();
     go('hoy');
     publishSoon();
+    checkQuest();
   }
 
   // ---------- Código de 4 dígitos ----------
@@ -447,6 +523,16 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
   });
   window.addEventListener('acyz:password-recovery', () => renderNewPassword());
 
+  // Foto real del ejercicio (dos fotos que se alternan) o, si no hay, la animación de figura
+  function visual(exId, implement, cls) {
+    const ex = EXERCISE_BY_ID[exId];
+    if (ex && ex.media) {
+      return `<div class="photo ${cls}" role="img" aria-label="${esc(ex.name)}">
+        <img src="media/${ex.media}/0.jpg" alt="" loading="lazy" decoding="async"><img src="media/${ex.media}/1.jpg" alt="" loading="lazy" decoding="async"></div>`;
+    }
+    return `<div class="${cls}" data-anim="${exId}" data-impl="${implement || ''}"></div>`;
+  }
+
   // ---------- Hoy ----------
   function exerciseRow(id, p, fmt) {
     const ex = EXERCISE_BY_ID[id];
@@ -455,7 +541,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     const amount = d.duration ? `${d.duration} s` : `${d.reps} rep${ex.perSide ? ' por lado' : ''}`;
     const extra = d.kg ? ` · ${d.kg} kg` : (d.implement && d.implement !== 'ninguno' ? ' · ' + EQUIPMENT_NAMES[d.implement] : '');
     return `<li><details><summary><span class="ex-name">${esc(ex.name)}</span><span class="ex-dose">${amount}${esc(extra)}</span></summary>
-      <div class="anim-box" data-anim="${ex.id}" data-impl="${d.implement || ''}"></div>
+      ${visual(ex.id, d.implement, 'anim-box')}
       <p>${esc(ex.desc)}</p>${d.tip ? `<p class="tip">${esc(d.tip)}</p>` : ''}</details></li>`;
   }
   function sessionCard(s, p, opts = {}) {
@@ -463,18 +549,20 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     const mins = Generator.estimateMinutes(steps);
     const fmt = Generator.format(p);
     return `
-      <article class="card session ${opts.done ? 'done' : ''} ${opts.hero ? 'hero-card' : ''}">
+      <article class="card session ${opts.done ? 'done' : ''} ${opts.hero ? 'hero-card sys' : ''}">
+        ${opts.hero ? '<p class="sys-tag">Misión diaria</p>' : ''}
         <div class="session-head">
           <div><p class="eyebrow">${esc(opts.eyebrow || DAY[s.day])}</p><h3>${esc(s.title)}</h3></div>
           ${opts.done ? `<span class="badge ok">${ICON.check} Hecha</span>` : `<span class="badge">~${mins} min</span>`}
         </div>
         <p class="muted small">${esc(Generator.describe(s, p))} · ${s.exercises.length} ejercicios</p>
+        ${opts.done ? '' : `<p class="reward">Recompensa: <b>+${Leveling.sessionReward({ minutes: mins, exercises: s.exercises, feedback: 'bien' }).xp} XP</b> · Fuerza · Resistencia · Voluntad</p>`}
         ${opts.open ? '' : '<details class="list-toggle"><summary>Ver ejercicios</summary>'}
         <ol class="ex-list">${s.exercises.map(id => exerciseRow(id, p, fmt)).join('')}</ol>
         <p class="muted small">Toca un ejercicio para ver cómo se hace. Incluye ${s.warmup.length} ejercicios de calentamiento y ${s.cooldown.length} de estiramiento.</p>
         <p class="equip-line small"><span>Equipo: ${esc(equipSummary(p))}</span><button class="link-btn" data-action="edit-equip">Cambiar</button></p>
         ${opts.open ? '' : '</details>'}
-        <button class="btn ${opts.done ? 'ghost' : 'primary'} block" data-action="start" data-index="${s.index}">${opts.done ? 'Repetir' : `${ICON.play} Empezar`}</button>
+        <button class="btn ${opts.done ? 'ghost' : 'primary'} block" data-action="start" data-index="${s.index}">${opts.done ? 'Repetir' : `${ICON.play} Aceptar misión`}</button>
       </article>`;
   }
 
@@ -497,8 +585,9 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       <section>
         <p class="eyebrow">${esc(new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }))}</p>
         <h1 class="hero">${hello}</h1>
+        ${statusHTML()}
+        ${questCardHTML()}
         <div class="speed quote-card"><p>«${esc(quote(Math.floor(Date.now() / 864e5)))}»</p></div>
-        ${rankHTML()}
         <div class="week-bar card">
           <div class="row"><b>Esta semana</b><span>${done.size} de ${plan.sessions.length} sesiones</span></div>
           <div class="bar"><i style="width:${pct}%"></i></div>
@@ -523,7 +612,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
   function powerOf() {
     const h = Store.history;
     const minutes = h.reduce((t, x) => t + (x.minutes || 0), 0);
-    const base = 100 + h.length * 120 + minutes * 8 + streakWeeks() * 300 + weekCount(weekKeyOf()) * 50;
+    const base = 100 + h.length * 120 + minutes * 8 + streakWeeks() * 300 + weekCount(weekKeyOf()) * 50 + (lvl().level - 1) * 60;
     return Math.round(base * ((Store.profile && Store.profile.intensity) || 1));
   }
   function buildStats() {
@@ -531,7 +620,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     const h = Store.history;
     const r = rankOf(h.length);
     return {
-      power: powerOf(), rank: r.letter, rankTitle: r.title,
+      power: powerOf(), rank: r.letter, rankTitle: r.title, playerLevel: lvl().level,
       sessions: h.length, minutes: h.reduce((t, x) => t + (x.minutes || 0), 0),
       streak: streakWeeks(), week: weekCount(weekKeyOf()), weekTarget: p.days || 0,
       intensity: p.intensity || 1, goal: p.goal || '', level: p.level || 0,
@@ -546,6 +635,26 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     publishTimer = setTimeout(() => Social.publish(buildStats(), Store.settings.nickname).catch(() => {}), 500);
   }
   window.addEventListener('acyz:synced', publishSoon);
+
+  // ---------- Ventana de estado (nivel, XP, estadísticas) ----------
+  const lvl = () => Leveling.progress(Store.history, Store.quests);
+  function playerName() {
+    return Store.settings.nickname || (Cloud.user ? Social.displayNameOf(Cloud.user) : 'Jugador');
+  }
+  function statusHTML() {
+    const g = lvl();
+    const r = rankOf(Store.history.length);
+    return `<section class="sys status">
+      <p class="sys-tag">Estado del jugador</p>
+      <div class="status-top">
+        <div class="rank-letter">${r.letter}</div>
+        <div class="status-id"><small>Nombre</small><b>${esc(playerName())}</b><span class="small muted">Rango ${r.letter} · ${esc(r.title)}</span></div>
+        <div class="status-lv"><small>Nivel</small><b>${g.level}</b></div>
+      </div>
+      <div class="xp"><div class="bar"><i style="width:${g.pct}%"></i></div><span class="small muted">XP ${g.into} / ${g.need} · Poder ${powerOf().toLocaleString('es')}</span></div>
+      <div class="stat-grid">${Object.entries(Leveling.STATS).map(([k, s]) => `<div><small>${s.label}</small><b>${g.stats[k]}</b></div>`).join('')}</div>
+    </section>`;
+  }
 
   function rankHTML() {
     const r = rankOf(Store.history.length);
@@ -685,7 +794,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     app.innerHTML = `
       <section>
         <h1 class="hero">Tu ficha</h1>
-        ${rankHTML()}
+        ${statusHTML()}
         ${metricsHTML(p)}
         <div class="card">
           <h3>Estadísticas del personaje</h3>
@@ -696,6 +805,9 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
             ${row('Entreno', `${p.days} días · ${p.minutes} min`)}
             ${row('Implementos', equipSummary(p))}
             ${row('Espacio', SPACE_INFO[p.space][0])}
+            ${p.activity ? row('Día a día', ACTIVITY_INFO[p.activity][0]) : ''}
+            ${p.bodyType ? row('Tu cuerpo', BODY_INFO[p.bodyType][0]) : ''}
+            ${p.style ? row('Estilo de lucha', STYLE_INFO[p.style][0] + ' · ' + STAMINA_INFO[p.stamina || 2][0]) : ''}
             ${row('Zonas a cuidar', p.limits.length ? p.limits.map(l => LIMIT_INFO[l]).join(', ') : 'Ninguna')}
             ${p.maxPushups ? row('Máx. flexiones', p.maxPushups) : ''}
             ${p.maxSquats ? row('Máx. sentadillas', p.maxSquats) : ''}
@@ -724,7 +836,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
           <p class="muted small">Elimina tu perfil, el historial y el peso${Cloud.user ? ' (también de la nube)' : ' de este navegador'}. Exporta una copia antes si quieres conservarlos.</p>
           <button class="btn danger" data-action="wipe">Borrar mis datos</button>
         </div>
-        <p class="muted small center">Acyz Lab · versión 1 · ${Cloud.user ? 'tus datos se guardan en tu cuenta' : 'tus datos se guardan en este dispositivo'}</p>
+        <p class="muted small center">Acyz Lab · versión 1 · fotos de ejercicios: Free Exercise DB (dominio público) · ${Cloud.user ? 'tus datos se guardan en tu cuenta' : 'tus datos se guardan en este dispositivo'}</p>
         <p class="muted small center legal-links"><a href="privacidad.html">Privacidad</a> · <a href="terminos.html">Condiciones</a></p>
       </section>`;
   }
@@ -743,6 +855,94 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       <button class="btn primary" data-action="auth-open">Entrar o crear cuenta</button></div>`;
   }
   Cloud.onStatus(st => { const el = $('#sync-status'); if (el) el.textContent = SYNC_TEXT[st] || ''; });
+
+  // ---------- Misiones sorpresa ----------
+  const todayKey = () => ymd(new Date());
+  function currentQuest() {
+    const q = Store.quests.find(x => x.date === todayKey() && x.status !== 'ninguna');
+    if (!q) return null;
+    if ((q.status === 'nueva' || q.status === 'activa') && Date.now() > new Date(q.expiresAt).getTime()) {
+      q.status = 'fallida'; Store.saveQuest(q);
+    }
+    return q;
+  }
+  function checkQuest() {
+    if (!Store.profile || W.session || Pin.isOpen()) return;
+    const now = new Date();
+    let q = Store.quests.find(x => x.date === todayKey());
+    if (!q) {
+      const win = Leveling.questSlot(Store.history);
+      if (!win || now.getHours() < win.from || now.getHours() >= win.to) return; // aún no es la franja
+      q = Leveling.planQuest(Store.profile, Store.history, now, (Cloud.user && Cloud.user.id) || 'local');
+      Store.saveQuest(q || { id: todayKey() + '-ninguna', date: todayKey(), status: 'ninguna' });
+      if (!q) return;
+    }
+    q = currentQuest();
+    if (q && q.status === 'nueva' && now >= new Date(q.appearAt) && !q.shown) {
+      q.shown = true; Store.saveQuest(q);
+      showQuestPopup(q);
+      if (tab === 'hoy' && !tabbar.hidden) viewHoy();
+    }
+  }
+  setInterval(checkQuest, 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(checkQuest, 800); });
+
+  const unitTxt = t => t.unit === 'min' ? `${t.target} min` : t.unit === 's' ? `${t.target} s` : `× ${t.target}`;
+  const hhmm = iso => new Date(iso).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  function questTasksHTML(q, interactive) {
+    return `<ul class="quest-tasks">${q.tasks.map((t, i) => `
+      <li class="${t.done ? 'done' : ''}">
+        ${interactive ? `<button class="quest-check" data-action="quest-task" data-i="${i}" aria-pressed="${t.done}" aria-label="Marcar ${esc(t.label)}">${t.done ? ICON.check : ''}</button>` : '<span class="quest-dot"></span>'}
+        <span class="quest-name">${esc(t.label)}</span><b>${unitTxt(t)}</b></li>`).join('')}</ul>`;
+  }
+  function questCardHTML() {
+    const q = currentQuest();
+    if (!q || !(q.status === 'nueva' && q.shown) && q.status !== 'activa' && q.status !== 'completada' && q.status !== 'fallida') return '';
+    if (q.status === 'completada') return `<section class="sys quest done"><p class="sys-tag">Misión sorpresa · completada</p><p class="small">Ganaste <b>+${q.xp} XP</b>. Vuelve mañana: el sistema siempre vigila.</p></section>`;
+    if (q.status === 'fallida') return `<section class="sys quest failed"><p class="sys-tag">Misión sorpresa · tiempo agotado</p><p class="small muted">Esta vez se escapó. La próxima no se te escapa.</p></section>`;
+    const left = q.tasks.filter(t => !t.done).length;
+    return `<section class="sys quest">
+      <p class="sys-tag">⚠ Misión sorpresa</p>
+      <p class="small">Complétala antes de las <b>${hhmm(q.expiresAt)}</b>. Recompensa: <b>+${q.xp} XP</b> y estadísticas.</p>
+      ${questTasksHTML(q, true)}
+      <p class="small muted">${left ? `Te ${left === 1 ? 'falta 1 objetivo' : `faltan ${left} objetivos`}. Toca cada uno cuando lo termines.` : ''}</p>
+    </section>`;
+  }
+  function showQuestPopup(q) {
+    const ov = document.createElement('div');
+    ov.id = 'quest-popup'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML = `
+      <div class="sys quest-pop">
+        <p class="sys-tag">⚠ Alerta del sistema</p>
+        <h2>¡Ha aparecido una misión sorpresa!</h2>
+        <p class="muted">Ejercicios suaves para subir tu personaje. Tienes hasta las <b>${hhmm(q.expiresAt)}</b>.</p>
+        ${questTasksHTML(q, false)}
+        <p class="reward">Recompensa: <b>+${q.xp} XP</b> · ${Object.keys(q.stats).map(k => `+${q.stats[k]} ${Leveling.STATS[k].short}`).join(' · ')}</p>
+        <div class="row-btns center-btns">
+          <button class="btn ghost" data-action="quest-later">Más tarde</button>
+          <button class="btn primary" data-action="quest-accept">Aceptar misión</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    beep(880, 120); setTimeout(() => beep(1175, 160), 140);
+  }
+  function closeQuestPopup() { $('#quest-popup')?.remove(); }
+  function toggleQuestTask(i) {
+    const q = currentQuest();
+    if (!q || (q.status !== 'activa' && q.status !== 'nueva')) return;
+    const before = lvl().level;
+    q.status = 'activa';
+    q.tasks[i].done = !q.tasks[i].done;
+    if (q.tasks.every(t => t.done)) {
+      q.status = 'completada'; q.completedAt = new Date().toISOString();
+      Store.saveQuest(q);
+      const after = lvl().level;
+      toast(after > before ? `¡Misión completada! +${q.xp} XP · ¡Subiste al nivel ${after}!` : `¡Misión completada! +${q.xp} XP`);
+      beep(784, 150); setTimeout(() => beep(1047, 250), 160);
+      publishSoon();
+    } else Store.saveQuest(q);
+    viewHoy();
+  }
 
   // ---------- Amigos ----------
   const GOAL_SHORT = { grasa: 'Perder grasa', musculo: 'Ganar músculo', fuerza: 'Fuerza', resistencia: 'Resistencia', forma: 'En forma' };
@@ -981,7 +1181,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       : `<div class="w-timer"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" class="track"/><circle id="w-ring" cx="100" cy="100" r="90" class="ring" style="stroke-dasharray:565.5;stroke-dashoffset:0"/></svg>
           <div><b id="w-time">${mmss(Math.ceil(W.remaining))}</b>${st.perSide && !isRest ? '<span>mitad de tiempo por lado</span>' : ''}</div></div>`;
     const animStep = isRest ? nextWork : st;
-    const anim = animStep && animStep.exId ? `<div class="w-anim ${isRest ? 'mini' : ''}" data-anim="${animStep.exId}" data-impl="${animStep.implement || ''}"></div>` : '';
+    const anim = animStep && animStep.exId ? visual(animStep.exId, animStep.implement, 'w-anim' + (isRest ? ' mini' : '')) : '';
     const implement = st.kg ? `<span class="badge">${st.kg} kg · ${EQUIPMENT_NAMES[st.implement]}</span>`
       : st.implement && st.implement !== 'ninguno' ? `<span class="badge">${EQUIPMENT_NAMES[st.implement]}</span>` : '';
     ov.className = (isRest ? 'rest' : 'work') + ' manga';
@@ -1034,11 +1234,16 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     W.minutes = minutes;
     beep(523, 150); setTimeout(() => beep(659, 150), 160); setTimeout(() => beep(784, 300), 320);
     const before = rankOf(Store.history.length), after = rankOf(Store.history.length + 1);
+    const reward = Leveling.sessionReward({ minutes, exercises: W.session.exercises, feedback: 'bien', duel: !!W.duel });
+    const lvBefore = lvl().level;
+    const lvAfter = Leveling.progress(Store.history.concat({ minutes, exercises: W.session.exercises, feedback: 'bien', duel: !!W.duel }), Store.quests).level;
     ov.className = 'finish speed burst';
     ov.innerHTML = `
       <div class="w-body center">
-        <p class="eyebrow">Sesión completada</p>
+        <p class="sys-tag">Misión completada</p>
         <h2 class="w-name">¡Límite superado! 🔥</h2>
+        <p class="reward big">+${reward.xp} XP · +${reward.stats.fuerza} FUE · +${reward.stats.agilidad} AGI · +${reward.stats.resistencia} RES · +${reward.stats.voluntad} VOL</p>
+        ${lvAfter > lvBefore ? `<p class="rank-up">¡SUBISTE DE NIVEL! Nivel ${lvBefore} → <b>${lvAfter}</b></p>` : ''}
         ${after.letter !== before.letter ? `<p class="rank-up">¡Subiste al rango <b>${after.letter}</b>: ${esc(after.title)}!</p>` : `<p class="w-quote">«${esc(quote(Date.now() / 1000))}»</p>`}
         <p class="muted">${esc(W.session.title)} · ${minutes} min</p>
         <h3>¿Cómo te fue?</h3>
@@ -1082,19 +1287,19 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       case 'wiz-back': readWizard(); if (wStep > 0) wStep--; renderWizard(); break;
       case 'wiz-cancel': go(wReturn); break;
       case 'wiz-save': { const err = readWizard(); if (err) renderWizard(err); else saveDraft(); break; }
-      case 'edit-equip': startWizard(true, 3); break;
+      case 'edit-equip': startWizard(true, 'equipo'); break;
       case 'kg-add': {
         const k = el.dataset.key, inp = $(`[data-kg-input="${k}"]`);
         const v = parseFloat((inp.value || '').replace(',', '.'));
         if (!(v > 0 && v <= 100)) { inp.focus(); return; }
         if (!draft.equipment[k].includes(v)) draft.equipment[k].push(v);
-        const f = new FormData($('#wiz')); ['barra', 'banda', 'cuerda'].forEach(x => { draft.equipment[x] = f.get(x) === 'on'; });
+        readEquipChecks(new FormData($('#wiz')));
         renderWizard(); $(`[data-kg-input="${k}"]`).focus(); break;
       }
       case 'kg-del': {
         const k = el.dataset.key;
         draft.equipment[k] = draft.equipment[k].filter(x => x !== +el.dataset.kg);
-        const f = new FormData($('#wiz')); ['barra', 'banda', 'cuerda'].forEach(x => { draft.equipment[x] = f.get(x) === 'on'; });
+        readEquipChecks(new FormData($('#wiz')));
         renderWizard(); break;
       }
       case 'tab': go(el.dataset.tab); break;
@@ -1147,6 +1352,12 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
         break;
       }
       case 'auth-open': authMode = 'entrar'; renderAuth(); break;
+      case 'quest-accept': {
+        const q = currentQuest(); if (q) { q.status = 'activa'; Store.saveQuest(q); }
+        closeQuestPopup(); go('hoy'); toast('Misión aceptada. ¡A por ella!'); break;
+      }
+      case 'quest-later': closeQuestPopup(); if (tab === 'hoy') viewHoy(); break;
+      case 'quest-task': toggleQuestTask(+el.dataset.i); break;
       case 'vs': openVs(el.dataset.id); break;
       case 'vs-close': closeVs(); break;
       case 'friend-add':

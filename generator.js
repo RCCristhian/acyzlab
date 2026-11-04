@@ -32,9 +32,15 @@ const Generator = (() => {
       bmr = 370 + 21.6 * lean;
       formula = 'Katch-McArdle (usa tu % de grasa)';
     }
-    const activity = p.days <= 2 ? 1.375 : p.days <= 4 ? 1.465 : 1.55;
+    // actividad: tu día a día (si lo respondiste) + los días de entreno
+    const activity = p.activity
+      ? [1.2, 1.35, 1.5, 1.65][p.activity - 1] + p.days * 0.035
+      : (p.days <= 2 ? 1.375 : p.days <= 4 ? 1.465 : 1.55);
     const maintenance = bmr * activity;
-    const adj = { grasa: -0.18, musculo: 0.1, fuerza: 0.05, resistencia: 0.05, forma: 0 }[p.goal] || 0;
+    let adj = { grasa: -0.18, musculo: 0.1, fuerza: 0.05, resistencia: 0.05, forma: 0 }[p.goal] || 0;
+    // tipo de cuerpo: si te cuesta subir de peso, un poco más; si te cuesta bajar, un poco menos
+    if (p.bodyType === 'subir') adj += p.goal === 'grasa' ? 0.05 : 0.05;
+    if (p.bodyType === 'bajar') adj -= p.goal === 'musculo' ? 0.05 : 0.03;
     let target = maintenance * (1 + adj);
     if (p.goal === 'grasa') target = Math.max(target, maintenance - 600, bmr);
     const round10 = n => Math.round(n / 10) * 10;
@@ -64,18 +70,30 @@ const Generator = (() => {
   }
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
+  const WEIGHTS = ['mancuernas', 'pesarusa', 'barradisco', 'barraz'];
   function hasEquip(p, key) {
     if (key === 'ninguno') return true;
     const e = p.equipment || {};
     if (key === 'mancuernas' || key === 'pesarusa') return Array.isArray(e[key]) && e[key].length > 0;
+    if (key === 'barradisco' || key === 'barraz') return Number(e[key]) > 0; // peso máximo que puedes cargar
     return !!e[key];
+  }
+  // Pesos posibles de cada implemento (para la barra: de la barra sola hasta tu máximo, de 2,5 en 2,5 kg)
+  function weightsOf(p, imp) {
+    const e = p.equipment || {};
+    if (imp === 'barradisco' || imp === 'barraz') {
+      const min = imp === 'barradisco' ? 20 : 10, max = Number(e[imp]) || 0, out = [];
+      for (let w = min; w <= max + 0.01; w += 2.5) out.push(w);
+      return out.length ? out : (max ? [max] : []);
+    }
+    return (e[imp] || []).slice().sort((a, b) => a - b);
   }
 
   // Implemento con el que se hará el ejercicio (prefiere pesas si las hay)
   // Si hay varias pesas posibles, elige la que mejor encaja con el peso sugerido;
   // si todas son demasiado pesadas y el ejercicio se puede hacer sin peso, sin peso.
   function implementFor(ex, p) {
-    const weighted = ex.equip.filter(k => (k === 'mancuernas' || k === 'pesarusa') && hasEquip(p, k));
+    const weighted = ex.equip.filter(k => WEIGHTS.includes(k) && hasEquip(p, k));
     if (weighted.length && ex.kgFactor) {
       const scored = weighted.map(k => {
         const s = suggestKg(ex, p, k);
@@ -91,6 +109,8 @@ const Generator = (() => {
 
   function allowed(ex, p) {
     if (!implementFor(ex, p)) return false;
+    if (ex.needs && !ex.needs.every(k => hasEquip(p, k))) return false;
+    if (ex.needsAny && !ex.needsAny.some(k => hasEquip(p, k))) return false;
     if ((ex.space || 1) > (p.space || 1)) return false;
     if ((p.limits || []).some(l => ex.loads.includes(l))) return false;
     return true;
@@ -125,8 +145,9 @@ const Generator = (() => {
       const base = p.goal === 'resistencia'
         ? [[40, 20], [45, 15], [50, 10]][L - 1]
         : [[30, 30], [40, 20], [45, 15]][L - 1];
-      const work = clamp(Math.round(base[0] * k / 5) * 5, 20, 60);
-      const rest = clamp(Math.round(base[1] / k / 5) * 5, 10, 40);
+      const st = { 1: [-5, 5], 2: [0, 0], 3: [5, -5] }[p.stamina || 2]; // cuánto aguantas sin parar
+      const work = clamp(Math.round((base[0] + st[0]) * k / 5) * 5, 20, 60);
+      const rest = clamp(Math.round((base[1] + st[1]) / k / 5) * 5, 10, 40);
       return { kind: 'circuito', work, rest, roundRest: 60 };
     }
     const cfg = {
@@ -180,6 +201,9 @@ const Generator = (() => {
       // usar el equipo que tiene
       const imp = implementFor(ex, p);
       if (imp && imp !== 'ninguno') s += 0.35;
+      if (ex.media) s += 0.15; // preferir los que tienen fotos reales
+      if (p.style === 'fuerza' && (ex.kgFactor || ex.machine || ex.level >= 2) && ex.group !== 'cardio') s += 0.3;
+      if (p.style === 'velocidad' && (ex.group === 'cardio' || /salto|jump|piques|slam/.test(ex.id))) s += 0.4;
       if (s > bestScore) { bestScore = s; best = ex; }
     }
     return best;
@@ -199,7 +223,8 @@ const Generator = (() => {
     const letter = {};
     const sessions = split.map((type, i) => {
       letter[type] = (letter[type] || 0) + 1;
-      const tpl = TEMPLATES[type].filter(g => !(g === 'cardio' && fmt.kind === 'series' && p.goal !== 'forma'));
+      const keepCardio = p.goal === 'forma' || p.style === 'velocidad' || p.bodyType === 'bajar';
+      const tpl = TEMPLATES[type].filter(g => !(g === 'cardio' && fmt.kind === 'series' && !keepCardio));
       const used = new Set();
       const ids = [];
       for (let s = 0; ids.length < c.n && s < c.n * 3; s++) {
@@ -236,7 +261,7 @@ const Generator = (() => {
 
   // ---------- Dosis (se calcula al momento con la intensidad actual) ----------
   function suggestKg(ex, p, imp) {
-    const list = (p.equipment[imp] || []).slice().sort((a, b) => a - b);
+    const list = weightsOf(p, imp);
     if (!list.length || !ex.kgFactor) return null;
     const levelMult = [0.7, 1, 1.3][p.level - 1];
     const goalMult = { fuerza: 1.25, musculo: 1, forma: 0.85, grasa: 0.75, resistencia: 0.7 }[p.goal];
@@ -269,10 +294,12 @@ const Generator = (() => {
   function dose(ex, p, fmt) {
     const imp = implementFor(ex, p);
     const out = { implement: imp, kg: null, tip: '' };
-    const kgInfo = (imp === 'mancuernas' || imp === 'pesarusa') ? suggestKg(ex, p, imp) : null;
+    const kgInfo = WEIGHTS.includes(imp) ? suggestKg(ex, p, imp) : null;
+    if (ex.machine) out.tip = 'Elige un peso con el que termines la serie pudiendo hacer 2 repeticiones más.';
+    if (imp === 'barradisco' && ex.level >= 2) out.tip = 'Calienta con la barra sola y luego sube al peso indicado. Si dudas de la técnica, baja el peso.';
     if (kgInfo) {
       out.kg = kgInfo.kg;
-      if (kgInfo.light) out.tip = 'Tu pesa es ligera para este ejercicio: baja en 3 segundos y haz más repeticiones.';
+      if (kgInfo.light && imp !== 'barradisco' && imp !== 'barraz') out.tip = 'Tu pesa es ligera para este ejercicio: baja en 3 segundos y haz más repeticiones.';
       if (kgInfo.heavy) out.tip = 'Tu pesa es pesada para este ejercicio: haz menos repeticiones con buena técnica.';
     }
     if (fmt.kind === 'circuito') {
@@ -350,5 +377,5 @@ const Generator = (() => {
       : `${fmt.sets} series · descanso ${fmt.rest} s`;
   }
 
-  return { GOALS, LEVELS, metrics, generateWeek, buildSteps, estimateMinutes, describe, format, dose, implementFor, allowed };
+  return { GOALS, LEVELS, metrics, generateWeek, buildSteps, estimateMinutes, describe, format, dose, implementFor, allowed, hasEquip };
 })();

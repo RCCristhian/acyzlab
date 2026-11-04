@@ -194,6 +194,13 @@ const Store = (() => {
     get security() { return data.security || null; },
     saveSecurity(s) { data.security = s; return persist(); },
 
+    // misiones sorpresa
+    get quests() { return data.quests || []; },
+    saveQuest(q) {
+      data.quests = (data.quests || []).filter(x => x.id !== q.id).concat(q).slice(-40);
+      return persist();
+    },
+
     get settings() { return data.settings; },
     saveSettings(s) { data.settings = Object.assign(data.settings, s); return persist(); },
 
