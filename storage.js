@@ -183,6 +183,10 @@ const Store = (() => {
     },
     removeWeight(date) { data.weights = data.weights.filter(w => w.date !== date); return persist(); },
 
+    // código de 4 dígitos (solo se guarda su hash)
+    get security() { return data.security || null; },
+    saveSecurity(s) { data.security = s; return persist(); },
+
     get settings() { return data.settings; },
     saveSettings(s) { data.settings = Object.assign(data.settings, s); return persist(); },
 

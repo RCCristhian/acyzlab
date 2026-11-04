@@ -300,6 +300,10 @@
     Store.saveProfile(p);
     if (!Store.weights.length || wEditing) Store.addWeight({ date: todayStr(), kg: p.weight });
     ensurePlan();
+    if (!wEditing && !hasPin()) {
+      createPin().then(() => { go('hoy'); toast('¡Listo! Tu entrenamiento comienza ahora.'); });
+      return;
+    }
     toast(wEditing ? 'Guardado. Tu plan se adaptó a los cambios.' : '¡Listo! Tu entrenamiento comienza ahora.');
     go(wEditing ? wReturn : 'hoy');
   }
@@ -350,8 +354,66 @@
   async function startApp() {
     await Store.init(Cloud.enabled && Cloud.user ? CloudAdapter : LocalAdapter);
     applyTheme();
-    if (Store.profile) go('hoy'); else startWizard(false);
+    if (!Store.profile) return startWizard(false);
+    tabbar.hidden = true; app.innerHTML = '';
+    await requirePin();
+    go('hoy');
   }
+
+  // ---------- Código de 4 dígitos ----------
+  const RESET_PIN = 'acyzlab.resetpin';
+  const hasPin = () => !!(Store.security && Store.security.pinHash);
+  async function createPin(intro) {
+    for (;;) {
+      const first = await Pin.prompt({
+        title: 'Crea tu código secreto', sub: intro || 'Elige 4 dígitos. Te los pediremos cada vez que entres.',
+        validate: async () => true, celebrate: false, successTitle: '¡Perfecto!', successText: 'Ahora repítelo para confirmar.', successSub: 'Paso 1 de 2',
+      });
+      const second = await Pin.prompt({
+        title: 'Repite tu código', sub: 'Escribe los mismos 4 dígitos para confirmarlo.', mask: true,
+        validate: async c => c === first || 'No coincide. Inténtalo otra vez.',
+        successTitle: 'Código creado', successText: 'Tu cuenta está protegida.', successSub: 'Verificado y seguro',
+        link: { prefix: '¿Te equivocaste?', label: 'Volver a empezar', onClick: () => {} },
+      });
+      if (second === null) continue; // eligió volver a empezar
+      const salt = Pin.newSalt();
+      await Store.saveSecurity({ pinHash: await Pin.hash(second, salt), salt, createdAt: new Date().toISOString() });
+      try { sessionStorage.removeItem(RESET_PIN); } catch { /* */ }
+      return second;
+    }
+  }
+  async function requirePin() {
+    let reset = false;
+    try { reset = sessionStorage.getItem(RESET_PIN) === '1'; } catch { /* */ }
+    if (!hasPin() || reset) return createPin(reset ? 'Elige tu código nuevo de 4 dígitos.' : undefined);
+    const sec = Store.security;
+    const r = await Pin.prompt({
+      title: 'Introduce tu código', sub: 'Escribe tus 4 dígitos secretos.<br>Se verificará solo al completarlo.', mask: true,
+      validate: async c => (await Pin.hash(c, sec.salt)) === sec.pinHash,
+      successTitle: 'Verificado con éxito', successText: '¡De vuelta al entrenamiento!', successSub: 'Verificado y seguro',
+      link: { prefix: '¿Olvidaste tu código?', label: 'Recupéralo', onClick: forgotPin },
+    });
+    if (r === null) return new Promise(() => {}); // «Olvidé mi código» sigue su propio camino
+    return r;
+  }
+  function forgotPin() {
+    if (Cloud.user) {
+      if (confirm('Para crear un código nuevo, vuelve a entrar con tu cuenta (Google o correo). ¿Continuar?')) {
+        try { sessionStorage.setItem(RESET_PIN, '1'); } catch { /* */ }
+        Cloud.signOut().then(() => { authMode = 'entrar'; renderAuth('Entra de nuevo y podrás crear tu código nuevo.'); });
+      } else requirePin().then(() => go(tab));
+    } else if (confirm('Sin cuenta, la única forma de quitar el código es borrar los datos de este dispositivo y empezar de nuevo. ¿Borrar?')) {
+      Store.reset().then(() => { applyTheme(); startWizard(false); });
+    } else requirePin().then(() => go(tab));
+  }
+  // Pedir el código al volver tras más de 5 minutos fuera
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000 && Store.profile && hasPin() && !W.session && !Pin.isOpen() && tabbar.hidden === false) {
+      requirePin();
+    }
+  });
 
   app.addEventListener('submit', async e => {
     if (e.target.id === 'auth-form') {
@@ -622,6 +684,9 @@
           </div></div>
           <label class="choice check"><input type="checkbox" data-setting="sound" ${s.sound ? 'checked' : ''}><span><b>Sonido y vibración</b><small>Avisos en la cuenta atrás</small></span></label>
         </div>
+        <div class="card"><h3>Código secreto</h3>
+          <p class="muted small">Tus 4 dígitos para entrar a la app. Se guardan cifrados.</p>
+          <button class="btn ghost" data-action="change-pin">Cambiar mi código</button></div>
         ${accountHTML()}
         <div class="card danger">
           <h3>Borrar todo</h3>
@@ -889,6 +954,16 @@
         break;
       }
       case 'auth-local': Cloud.localOnly = true; startApp(); break;
+      case 'change-pin': {
+        const sec = Store.security;
+        const ask = sec && sec.pinHash ? Pin.prompt({
+          title: 'Tu código actual', sub: 'Primero escribe el código que usas ahora.', mask: true, celebrate: false,
+          validate: async c => (await Pin.hash(c, sec.salt)) === sec.pinHash, successTitle: 'Correcto', successText: 'Ahora elige el nuevo.', successSub: 'Verificado',
+          link: { prefix: '¿Cambiaste de idea?', label: 'Cancelar', onClick: () => {} },
+        }) : Promise.resolve();
+        ask.then(r => { if (r === null) return; return createPin('Elige tu código nuevo de 4 dígitos.').then(() => { viewPerfil(); toast('Código cambiado.'); }); });
+        break;
+      }
       case 'auth-open': authMode = 'entrar'; renderAuth(); break;
       case 'logout':
         if (confirm('¿Cerrar sesión? Tu progreso queda guardado en tu cuenta.')) {
