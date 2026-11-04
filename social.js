@@ -97,3 +97,66 @@ const Social = (() => {
 
   return { publish, load, find, request, accept, remove, displayNameOf, invite, getDuel, updateDuel, pendingInvites };
 })();
+
+/*
+ * Avisos con la app cerrada (notificaciones push).
+ * El servidor es la función acyzlab-push de Supabase (supabase/functions/acyzlab-push).
+ */
+const Push = (() => {
+  const cfg = window.ACYZ_CONFIG || {};
+  const fnUrl = () => `${cfg.supabaseUrl}/functions/v1/acyzlab-push`;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const b64ToBytes = s => {
+    const pad = '='.repeat((4 - s.length % 4) % 4);
+    const raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, c => c.charCodeAt(0));
+  };
+
+  async function subscription() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    const reg = await navigator.serviceWorker.getRegistration();
+    return reg ? reg.pushManager.getSubscription() : null;
+  }
+  /** 'activo' | 'inactivo' | 'bloqueado' | 'no-soportado' | 'instalar' (iPhone sin instalar) */
+  async function status() {
+    if (isIOS() && !installed()) return 'instalar';
+    if (!('PushManager' in window) || !('Notification' in window)) return 'no-soportado';
+    if (Notification.permission === 'denied') return 'bloqueado';
+    return (await subscription()) ? 'activo' : 'inactivo';
+  }
+  async function enable() {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') throw new Error('permiso');
+    const { data: ses } = await Cloud.client.auth.getSession();
+    const token = ses.session && ses.session.access_token;
+    const res = await fetch(`${fnUrl()}?kind=key`, { headers: { apikey: cfg.supabaseKey, ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+    if (!res.ok) throw new Error('servidor');
+    const { key } = await res.json();
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(key) });
+    const j = sub.toJSON();
+    const { error } = await Cloud.client.from('acyzlab_push_subs')
+      .upsert({ endpoint: j.endpoint, user_id: Cloud.user.id, p256dh: j.keys.p256dh, auth: j.keys.auth });
+    if (error) throw error;
+  }
+  async function disable() {
+    const sub = await subscription();
+    if (!sub) return;
+    await Cloud.client.from('acyzlab_push_subs').delete().eq('endpoint', sub.endpoint);
+    await sub.unsubscribe();
+  }
+  /** Pide al servidor que avise al rival del reto. */
+  async function notifyDuel(id) {
+    const { data } = await Cloud.client.auth.getSession();
+    const token = data.session && data.session.access_token;
+    if (!token) return;
+    await fetch(fnUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: cfg.supabaseKey, Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ kind: 'duel', id }),
+    });
+  }
+  return { status, enable, disable, notifyDuel };
+})();

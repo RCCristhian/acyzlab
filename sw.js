@@ -1,6 +1,6 @@
 /* Service worker: guarda la app para que funcione sin internet.
    Al cambiar cualquier archivo, sube el número de VERSION. */
-const VERSION = 'acyzlab-v19';
+const VERSION = 'acyzlab-v20';
 const FILES = [
   './', 'index.html', 'styles.css', 'config.js', 'vendor/supabase.js', 'storage.js', 'pin.js', 'social.js', 'exercises.js', 'animations.js', 'generator.js', 'leveling.js', 'app.js', 'manifest.json',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png',
@@ -29,4 +29,28 @@ self.addEventListener('fetch', e => {
       })
       .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html')))
   );
+});
+
+// ---------- Avisos con la app cerrada ----------
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Acyz Lab', {
+    body: d.body || '',
+    icon: 'icons/icon-192.png',
+    badge: 'icons/icon-192.png',
+    tag: d.tag || 'acyzlab',
+    renotify: true,
+    vibrate: [120, 60, 120],
+    data: { url: d.url || './' },
+  }));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || './';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const open = list.find(c => c.url.startsWith(self.registration.scope));
+    return open ? open.focus() : self.clients.openWindow(url);
+  }));
 });

@@ -137,6 +137,7 @@
     tabbar.hidden = false;
     $$('.tab', tabbar).forEach(b => b.classList.toggle('active', b.dataset.tab === t));
     ({ hoy: viewHoy, plan: viewPlan, progreso: viewProgreso, amigos: viewAmigos, perfil: viewPerfil })[t]();
+    if (t === 'perfil') paintPushCard();
     window.scrollTo(0, 0);
   }
   tabbar.addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) go(b.dataset.tab); });
@@ -436,6 +437,10 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     go('hoy');
     publishSoon();
     checkQuest();
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz && Store.settings.tz !== tz) Store.saveSettings({ tz });
+    } catch { /* */ }
   }
 
   // ---------- Código de 4 dígitos ----------
@@ -831,6 +836,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
         <div class="card"><h3>Código secreto</h3>
           <p class="muted small">Tus 4 dígitos para entrar a la app. Se guardan cifrados.</p>
           <button class="btn ghost" data-action="change-pin">Cambiar mi código</button></div>
+        ${Cloud.user ? '<div class="card" id="push-card"><h3>Avisos en el celular</h3><p class="muted small">Comprobando…</p></div>' : ''}
         ${accountHTML()}
         <div class="card danger">
           <h3>Borrar todo</h3>
@@ -966,6 +972,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     let duel;
     try { duel = await Social.invite(rv.id); }
     catch (e) { console.warn(e); toast('No se pudo enviar la invitación. ¿Seguís siendo amigos?'); return; }
+    Push.notifyDuel(duel.id).catch(() => {}); // aviso al celular del rival aunque tenga la app cerrada
     closeVs();
     const ov = document.createElement('div');
     ov.id = 'duel-wait'; ov.className = 'overlay-center';
@@ -1213,6 +1220,24 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       viewAmigos();
     }
   });
+
+  // ---------- Avisos (notificaciones) ----------
+  const PUSH_TEXT = {
+    activo: ['Avisos activados ✓', 'Te avisaremos de las misiones sorpresa y de los retos de tu rival, aunque la app esté cerrada.', 'Desactivar avisos', 'push-off'],
+    inactivo: ['Avisos desactivados', 'Actívalos para enterarte de las misiones sorpresa y de cuando tu rival te reta, aunque la app esté cerrada.', 'Activar avisos', 'push-on'],
+    bloqueado: ['Avisos bloqueados', 'Bloqueaste los avisos para esta web. Actívalos en los ajustes del navegador (permisos del sitio → Notificaciones).', '', ''],
+    instalar: ['Primero instala la app', 'En iPhone los avisos solo funcionan con la app añadida a la pantalla de inicio (Compartir → Añadir a pantalla de inicio). Ábrela desde ese ícono y vuelve aquí.', '', ''],
+    'no-soportado': ['Tu navegador no admite avisos', 'Prueba con Chrome (Android) o con la app instalada en la pantalla de inicio (iPhone).', '', ''],
+  };
+  async function paintPushCard() {
+    const card = $('#push-card');
+    if (!card) return;
+    let st = 'no-soportado';
+    try { st = await Push.status(); } catch { /* */ }
+    const [title, text, btn, action] = PUSH_TEXT[st];
+    card.innerHTML = `<h3>Avisos en el celular</h3><p class="small"><b>${title}</b></p><p class="muted small">${text}</p>
+      ${btn ? `<button class="btn ${st === 'activo' ? 'ghost' : 'primary'}" data-action="${action}">${btn}</button>` : ''}`;
+  }
 
   // ---------- Modo entrenamiento ----------
   const W = { steps: [], i: 0, remaining: 0, running: false, endAt: 0, timer: null, startedAt: 0, session: null, lock: null, audio: null, lastBeep: null };
@@ -1497,6 +1522,14 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       }
       case 'quest-later': closeQuestPopup(); if (tab === 'hoy') viewHoy(); break;
       case 'quest-task': toggleQuestTask(+el.dataset.i); break;
+      case 'push-on':
+        el.disabled = true;
+        Push.enable().then(() => { toast('¡Avisos activados! El sistema te avisará.'); paintPushCard(); })
+          .catch(err => { console.warn(err); toast(err && err.message === 'permiso' ? 'Necesitamos tu permiso para enviarte avisos.' : 'No se pudieron activar los avisos.'); paintPushCard(); });
+        break;
+      case 'push-off':
+        Push.disable().then(() => { toast('Avisos desactivados.'); paintPushCard(); }).catch(() => paintPushCard());
+        break;
       case 'set-rival':
         Store.saveSettings({ rival: { id: el.dataset.uid, name: el.dataset.name, power: +el.dataset.power || 0 } });
         closeVs(); toast(`${el.dataset.name} es ahora tu rival. ¡Que empiece la batalla!`); viewAmigos(); break;
