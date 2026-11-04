@@ -45,8 +45,14 @@ const Cloud = (() => {
     get localOnly() { try { return localStorage.getItem(MODE_KEY) === 'local'; } catch { return false; } },
     set localOnly(v) { try { v ? localStorage.setItem(MODE_KEY, 'local') : localStorage.removeItem(MODE_KEY); } catch { /* */ } },
 
+    providers: {},
     async init() {
       if (!enabled) return null;
+      // qué métodos de entrada están activos (por ejemplo, si Google ya está configurado)
+      try {
+        const r = await fetch(`${cfg.supabaseUrl}/auth/v1/settings`, { headers: { apikey: cfg.supabaseKey } });
+        if (r.ok) this.providers = (await r.json()).external || {};
+      } catch { /* sin conexión */ }
       const { data } = await client.auth.getSession();
       user = data.session ? data.session.user : null;
       client.auth.onAuthStateChange((event, session) => {
