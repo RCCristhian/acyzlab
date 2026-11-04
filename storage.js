@@ -96,7 +96,7 @@ const CloudAdapter = {
     const uid = Cloud.user.id;
     const mine = local && (!local.owner || local.owner === uid) ? local : null;
     try {
-      const { data, error } = await Cloud.client.from('user_data').select('data').eq('user_id', uid).maybeSingle();
+      const { data, error } = await Cloud.client.from('acyzlab_user_data').select('data').eq('user_id', uid).maybeSingle();
       if (error) throw error;
       const remote = data && data.data && data.data.schema ? data.data : null;
       Cloud.setStatus('synced');
@@ -127,7 +127,7 @@ const CloudAdapter = {
     const data = this.pending;
     if (!data || !Cloud.user) return;
     try {
-      const { error } = await Cloud.client.from('user_data')
+      const { error } = await Cloud.client.from('acyzlab_user_data')
         .upsert({ user_id: Cloud.user.id, data, updated_at: new Date().toISOString() });
       if (error) throw error;
       if (this.pending === data) this.pending = null;

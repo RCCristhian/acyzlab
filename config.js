@@ -11,6 +11,6 @@
  * Si se dejan vacías, la app funciona igual guardando en el dispositivo.
  */
 window.ACYZ_CONFIG = {
-  supabaseUrl: '',
-  supabaseKey: '',
+  supabaseUrl: 'https://cegnqgqftdiramaoebsy.supabase.co',
+  supabaseKey: 'sb_publishable_oOBGRvcqeH1QxFnG7zIY0g_A_eNAk6u',
 };
