@@ -21,6 +21,8 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 
 ## Conectar Supabase (cuentas y nube)
 
+**Ya está conectado:** proyecto de Supabase **CC17**, tabla `acyzlab_user_data`, entrada con correo y con Google (proyecto de Google Cloud «Acyz Lab», en producción). Estos pasos sirven si algún día hay que montarlo de nuevo en otro proyecto:
+
 1. En [supabase.com](https://supabase.com) crea un proyecto.
 2. **SQL Editor → New query**: pega `supabase/schema.sql` y pulsa **Run**. Crea la tabla y las reglas para que cada persona solo vea lo suyo.
 3. **Authentication → URL Configuration**:
@@ -45,6 +47,7 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 | `storage.js` | Guardado: en el dispositivo o en Supabase |
 | `config.js` | Dirección y clave pública de Supabase |
 | `supabase/schema.sql` | Tabla y reglas de seguridad de la base de datos |
+| `privacidad.html`, `terminos.html`, `legal.css` | Política de privacidad y condiciones de uso (las pide Google) |
 | `vendor/supabase.js` | Librería oficial de Supabase (v2.110.0, licencia MIT) |
 | `manifest.json`, `sw.js`, `icons/` | Instalación como app y uso sin internet |
 
