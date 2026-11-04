@@ -111,6 +111,7 @@ const Generator = (() => {
     if (!implementFor(ex, p)) return false;
     if (ex.needs && !ex.needs.every(k => hasEquip(p, k))) return false;
     if (ex.needsAny && !ex.needsAny.some(k => hasEquip(p, k))) return false;
+    if (ex.skipIf && ex.skipIf.some(k => hasEquip(p, k))) return false; // hay una versión mejor con tu equipo
     if ((ex.space || 1) > (p.space || 1)) return false;
     if ((p.limits || []).some(l => ex.loads.includes(l))) return false;
     return true;

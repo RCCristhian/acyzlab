@@ -19,6 +19,7 @@
  *  media   carpeta de fotos reales en media/ (Free Exercise DB, dominio público)
  *  needs   equipo extra que hace falta además (todos); needsAny: basta uno de ellos
  *  machine true en máquinas con placas de peso (no se sugiere kg)
+ *  skipIf  si tienes alguno de estos equipos, hay una versión mejor y este no se usa
  */
 const EXERCISES = [
   // ---------- PIERNAS ----------
@@ -72,11 +73,11 @@ const EXERCISES = [
     desc: 'Pies sobre una silla o sofá y manos en el suelo. Más difícil que la flexión normal; carga más la parte alta del pecho.' },
   { id: 'flexion-pica', name: 'Flexiones en pica', group: 'empuje', equip: ['ninguno'], level: 2, type: 'reps', loads: ['hombros'], space: 1,
     desc: 'Cadera arriba formando una V invertida. Dobla los codos llevando la cabeza hacia el suelo entre las manos. Trabaja hombros.' },
-  { id: 'fondos-silla', media: 'Bench_Dips', name: 'Fondos en silla', group: 'empuje', equip: ['ninguno'], level: 2, type: 'reps', loads: ['hombros'], space: 1,
+  { id: 'fondos-silla', skipIf: ['paralelas'], media: 'Bench_Dips', name: 'Fondos en silla', group: 'empuje', equip: ['ninguno'], level: 2, type: 'reps', loads: ['hombros'], space: 1,
     desc: 'Manos en el borde de una silla firme, a tu espalda. Baja doblando los codos hacia atrás y sube. Trabaja tríceps.' },
   { id: 'press-hombros', media: 'Standing_Dumbbell_Press', name: 'Press de hombros', group: 'empuje', equip: ['mancuernas', 'pesarusa'], level: 1, type: 'reps', loads: ['hombros'], space: 1, kgFactor: 0.07,
     desc: 'De pie, pesas a la altura de los hombros. Empuja hacia arriba hasta estirar los brazos sin arquear la espalda.' },
-  { id: 'press-suelo', media: 'Dumbbell_Floor_Press', name: 'Press de pecho en el suelo', group: 'empuje', equip: ['mancuernas'], level: 1, type: 'reps', loads: [], space: 1, kgFactor: 0.1,
+  { id: 'press-suelo', skipIf: ['banco'], media: 'Dumbbell_Floor_Press', name: 'Press de pecho en el suelo', group: 'empuje', equip: ['mancuernas'], level: 1, type: 'reps', loads: [], space: 1, kgFactor: 0.1,
     desc: 'Boca arriba con rodillas dobladas. Empuja las mancuernas hacia el techo y baja hasta que los codos toquen el suelo.' },
   { id: 'press-banda', name: 'Press de pecho con banda', group: 'empuje', equip: ['banda'], level: 1, type: 'reps', loads: [], space: 1,
     desc: 'Banda por detrás de la espalda sujeta con ambas manos. Empuja hacia delante hasta estirar los brazos y vuelve despacio.' },
@@ -90,7 +91,7 @@ const EXERCISES = [
     desc: 'Boca abajo, levanta los brazos formando una Y, luego una T y luego una W, juntando los omóplatos en cada letra.' },
   { id: 'nadador', name: 'Nadador en el suelo', group: 'traccion', equip: ['ninguno'], level: 1, type: 'time', loads: [], space: 1,
     desc: 'Boca abajo con brazos y piernas un poco elevados. Mueve brazo y pierna contrarios arriba y abajo, como nadando.' },
-  { id: 'remo-mesa', media: 'Inverted_Row', name: 'Remo invertido bajo mesa', group: 'traccion', equip: ['ninguno'], level: 2, type: 'reps', loads: [], space: 1,
+  { id: 'remo-mesa', skipIf: ['trx'], media: 'Inverted_Row', name: 'Remo invertido bajo mesa', group: 'traccion', equip: ['ninguno'], level: 2, type: 'reps', loads: [], space: 1,
     desc: 'Túmbate bajo una mesa firme y agárrate al borde. Tira del pecho hacia la mesa con el cuerpo recto. Comprueba que la mesa aguanta.' },
   { id: 'colgarse', name: 'Colgarse de la barra', group: 'traccion', equip: ['barra'], level: 1, type: 'time', loads: ['hombros'], space: 1,
     desc: 'Cuélgate de la barra con los brazos estirados y los hombros ligeramente activos (no hundidos). Aguanta.' },
