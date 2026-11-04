@@ -13,7 +13,9 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 - **Rival y entrenar juntos**: elige a un amigo como rival, invítale a entrenar a la vez y veréis en directo una barra con el progreso de los dos. Da XP extra.
 - **Avisos con la app cerrada**: en Perfil → «Activar avisos». Te llega «⚠ ¡Misión sorpresa!» en tu franja y «⚔ ¡Te han retado!» cuando tu rival te invita. En iPhone hace falta añadir la app a la pantalla de inicio primero.
 - **Cuestionario inicial**: objetivo, edad, sexo, peso, estatura, tu historia de origen (día a día, cómo responde tu cuerpo, horas de sueño), nivel, días por semana, minutos por sesión, estilo de lucha (aguante y qué poder quieres despertar), equipo (mancuernas y pesas rusas con sus kilos, barra con discos, barra Z, rack, banco, cajón, barra de dominadas, paralelas, TRX, banda, cuerda, rueda abdominal, balón medicinal, fitball, saco de boxeo, poleas, máquinas de piernas, bici estática, cinta, elíptica y remo), espacio disponible y, si quieres, limitaciones, máximos de flexiones o sentadillas y % de grasa. Calcula el IMC, el metabolismo basal y las calorías orientativas.
-- **121 ejercicios** con descripción. 100 de ellos con **fotos reales** que se alternan como un mini vídeo (de Free Exercise DB, dominio público); el resto con animación de figura.
+- **709 ejercicios** con nombre y explicación en español: 683 con **fotos reales** que se alternan como un mini vídeo (de Free Exercise DB, dominio público); el resto con animación de figura. Los 121 básicos van dentro de la app y los otros 588 se cargan aparte (`data/exercises-extra.json`) para que arranque rápido.
+- **1.700 variaciones** generadas solas a partir de cada ejercicio: tempo lento, con pausa, a una mano, otro agarre, repeticiones y media, isométrico, versión fácil y versión difícil. A veces el plan te pone una, con su explicación.
+- **Catálogo de técnicas** (en Plan → «Abrir el catálogo»): busca por nombre, músculo o equipo, filtra por tipo y por lo que puedes hacer con tu equipo, y mira fotos, músculos y variaciones de cada ejercicio.
 - **Plan semanal** que cambia cada semana: cuerpo completo, superior/inferior o empuje/tracción/piernas según los días. Usa circuitos por tiempo o series y repeticiones según el objetivo. Solo usa el equipo que marcaste y respeta tu espacio y tus limitaciones. Además te dice qué peso usar.
 - **Modo entrenamiento** paso a paso, con temporizador, sonido, vibración, pantalla siempre encendida y barra de progreso. Al final pregunta «¿cómo te fue?» y ajusta tu «nivel de poder» (la intensidad).
 - **Amigos**: busca a tus amigos por su correo (el de Google o el que registraron), envía o acepta solicitudes y compite en un **ranking de poder**. El cara a cara (VS) compara poder, sesiones, minutos, racha e intensidad, y muestra sus últimas clases. Cada uno elige su nombre de luchador. Solo tus amigos ven tus estadísticas.
@@ -46,7 +48,11 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 | `index.html`, `styles.css` | Estructura y diseño |
 | `app.js` | Pantallas, cuenta y modo entrenamiento |
 | `pin.js` | Pop-up del código de 4 dígitos con su animación |
-| `exercises.js` | Banco de ejercicios |
+| `exercises.js` | Banco de ejercicios básico (121) |
+| `data/exercises-extra.json` | 588 ejercicios más de Free Exercise DB, traducidos (se cargan aparte) |
+| `catalog.js` | Carga el catálogo ampliado |
+| `variations.js` | Crea las variaciones de cada ejercicio |
+| `tools/catalogo/` | Traducciones y script para rehacer el catálogo, y simulación de semanas |
 | `generator.js` | Cálculos y generador del plan |
 | `animations.js` | Animaciones de los ejercicios |
 | `storage.js` | Guardado: en el dispositivo o en Supabase |

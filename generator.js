@@ -190,11 +190,15 @@ const Generator = (() => {
     return { warm, cool, n, rounds };
   }
 
+  const rootOf = ex => ex.base || ex.id;
   function pick(pool, rand, p, used, scoreExtra) {
     let best = null, bestScore = -Infinity;
     for (const ex of pool) {
-      if (used.has(ex.id)) continue;
+      if (used.has(rootOf(ex))) continue; // nunca dos versiones del mismo ejercicio en una sesión
       let s = rand() + (scoreExtra ? scoreExtra(ex) : 0);
+      s += ex.pri || 0; // ejercicios muy específicos (muñecas, dedos…) salen menos
+      if (ex.base) s -= 0.3; // las variaciones salen de vez en cuando, no siempre
+      else if (!ex.id.startsWith('f-')) s += 0.25; // los ejercicios básicos de la app, un poco más
       // nivel: preferir el más cercano al del usuario (fuerza prefiere lo más difícil)
       const diff = p.level - ex.level;
       if (diff < 0) continue;
@@ -219,7 +223,11 @@ const Generator = (() => {
     const fmt = format(p);
     const c = counts(p, fmt);
     const split = SPLITS[p.days];
-    const prev = new Set(prevIds);
+    const prev = new Set(prevIds.map(id => (EXERCISE_BY_ID[id] && EXERCISE_BY_ID[id].base) || id));
+    // filtra una sola vez (con cientos de ejercicios y variaciones es mucho más rápido)
+    const ok = EXERCISES.filter(e => allowed(e, p));
+    const byGroup = {};
+    ok.forEach(e => { (byGroup[e.group] = byGroup[e.group] || []).push(e); });
     const weekUse = {};
     const letter = {};
     const sessions = split.map((type, i) => {
@@ -230,19 +238,21 @@ const Generator = (() => {
       const ids = [];
       for (let s = 0; ids.length < c.n && s < c.n * 3; s++) {
         const group = tpl[s % tpl.length];
-        const pool = EXERCISES.filter(e => e.group === group && allowed(e, p));
-        const extra = ex => (prev.has(ex.id) ? -0.5 : 0) - (weekUse[ex.id] || 0) * 0.35;
+        const pool = byGroup[group] || [];
+        const extra = ex => (prev.has(rootOf(ex)) ? -0.5 : 0) - (weekUse[rootOf(ex)] || 0) * 0.35;
         let ex = pick(pool, rand, p, used, extra);
         if (!ex) { // si no hay de ese grupo, usar core o cardio
-          const alt = EXERCISES.filter(e => (e.group === 'core' || e.group === 'cardio') && allowed(e, p));
+          const alt = (byGroup.core || []).concat(byGroup.cardio || []);
           ex = pick(alt, rand, p, used, extra);
         }
         if (!ex) continue;
-        used.add(ex.id); ids.push(ex.id);
-        weekUse[ex.id] = (weekUse[ex.id] || 0) + 1;
+        used.add(rootOf(ex)); ids.push(ex.id);
+        weekUse[rootOf(ex)] = (weekUse[rootOf(ex)] || 0) + 1;
       }
-      const warmPool = EXERCISES.filter(e => e.group === 'calentamiento');
-      const coolPool = EXERCISES.filter(e => e.group === 'estiramiento');
+      // calentamiento y estiramientos: solo los que puedes hacer con tu equipo y tu nivel
+      const easy = e => !e.base && e.level <= p.level;
+      const warmPool = (byGroup.calentamiento || []).filter(easy);
+      const coolPool = (byGroup.estiramiento || []).filter(easy);
       const shuffle = arr => arr.map(x => [rand(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
       // el calentamiento empieza suave (marcha) y luego varía
       const warmup = ['cal-marcha', ...shuffle(warmPool.filter(e => e.id !== 'cal-marcha')).map(e => e.id)].slice(0, c.warm);
@@ -275,20 +285,21 @@ const Generator = (() => {
 
   function repsFor(ex, p, baseReps) {
     let r = baseReps;
+    const rid = ex.base || ex.id; // las variaciones usan las mismas cuentas que su ejercicio base
     // usa el máximo de flexiones o sentadillas si lo dio
     if (ex.group === 'empuje' && p.maxPushups > 0 && ex.equip.includes('ninguno') && implementFor(ex, p) === 'ninguno') {
-      const ratio = { flexion: 0.6, 'flexion-rodillas': 0.9, 'flexion-inclinada': 1, 'flexion-diamante': 0.4, 'flexion-declinada': 0.45, 'flexion-pica': 0.45, 'fondos-silla': 0.7 }[ex.id];
+      const ratio = { flexion: 0.6, 'flexion-rodillas': 0.9, 'flexion-inclinada': 1, 'flexion-diamante': 0.4, 'flexion-declinada': 0.45, 'flexion-pica': 0.45, 'fondos-silla': 0.7 }[rid];
       if (ratio) r = Math.round(p.maxPushups * ratio * (p.goal === 'fuerza' ? 0.6 : 0.75) * (p.intensity || 1));
     }
     if (ex.group === 'piernas' && p.maxSquats > 0 && implementFor(ex, p) === 'ninguno') {
-      const ratio = { sentadilla: 0.6, 'sentadilla-sumo': 0.6, 'zancada-atras': 0.35, bulgara: 0.25, 'sentadilla-salto': 0.3, 'zancada-salto': 0.25, 'pistol-asistida': 0.15 }[ex.id];
+      const ratio = { sentadilla: 0.6, 'sentadilla-sumo': 0.6, 'zancada-atras': 0.35, bulgara: 0.25, 'sentadilla-salto': 0.3, 'zancada-salto': 0.25, 'pistol-asistida': 0.15 }[rid];
       if (ratio) r = Math.round(p.maxSquats * ratio * (p.intensity || 1));
     }
     // ejercicios fáciles sin peso en fuerza: más repeticiones lentas
     if (p.goal === 'fuerza' && ex.level < p.level && !ex.kgFactor) r = Math.round(r * 1.5);
-    if (ex.id === 'dominada') r = Math.min(r, p.level === 3 ? 8 : 5);
-    if (ex.id === 'dominada-negativa') r = Math.min(r, 6);
-    if (ex.id === 'burpee') r = Math.min(r, 15);
+    if (rid === 'dominada') r = Math.min(r, p.level === 3 ? 8 : 5);
+    if (rid === 'dominada-negativa') r = Math.min(r, 6);
+    if (rid === 'burpee') r = Math.min(r, 15);
     return clamp(r, 3, 40);
   }
 
@@ -320,6 +331,9 @@ const Generator = (() => {
   }
 
   // ---------- Pasos del entrenamiento ----------
+  // En las variaciones, primero cómo hacer la variación y luego el ejercicio base
+  const howTo = ex => (ex.vtip ? `${ex.vlabel}: ${ex.vtip} ${ex.desc}` : ex.desc);
+
   function buildSteps(session, p) {
     const fmt = format(p);
     const c = counts(p, fmt);
@@ -329,7 +343,7 @@ const Generator = (() => {
 
     session.warmup.forEach((id, i) => {
       const ex = get(id); if (!ex) return;
-      steps.push({ phase: 'Calentamiento', kind: 'work', exId: id, name: ex.name, desc: ex.desc, duration: WARMUP_SEC, label: `${i + 1} de ${session.warmup.length}` });
+      steps.push({ phase: 'Calentamiento', kind: 'work', exId: id, name: ex.name, desc: howTo(ex), duration: WARMUP_SEC, label: `${i + 1} de ${session.warmup.length}` });
     });
     const main = session.exercises.map(get).filter(Boolean);
     steps.push({ phase: 'Calentamiento', kind: 'rest', name: '¡Ahora va en serio!', duration: 15, next: main[0]?.name });
@@ -338,7 +352,7 @@ const Generator = (() => {
       for (let r = 1; r <= c.rounds; r++) {
         main.forEach((ex, i) => {
           const d = dose(ex, p, fmt);
-          steps.push({ phase: 'Circuito', kind: 'work', exId: ex.id, name: ex.name, desc: ex.desc, perSide: ex.perSide, ...d, label: `Ronda ${r} de ${c.rounds} · ${i + 1}/${main.length}` });
+          steps.push({ phase: 'Circuito', kind: 'work', exId: ex.id, name: ex.name, desc: howTo(ex), perSide: ex.perSide, ...d, label: `Ronda ${r} de ${c.rounds} · ${i + 1}/${main.length}` });
           const last = i === main.length - 1;
           if (last && r === c.rounds) return;
           const nextEx = last ? main[0] : main[i + 1];
@@ -349,7 +363,7 @@ const Generator = (() => {
       main.forEach((ex, i) => {
         const d = dose(ex, p, fmt);
         for (let s = 1; s <= fmt.sets; s++) {
-          steps.push({ phase: 'Series', kind: 'work', exId: ex.id, name: ex.name, desc: ex.desc, perSide: ex.perSide, ...d, label: `Serie ${s} de ${fmt.sets} · ejercicio ${i + 1}/${main.length}` });
+          steps.push({ phase: 'Series', kind: 'work', exId: ex.id, name: ex.name, desc: howTo(ex), perSide: ex.perSide, ...d, label: `Serie ${s} de ${fmt.sets} · ejercicio ${i + 1}/${main.length}` });
           const lastSet = s === fmt.sets;
           if (lastSet && i === main.length - 1) break;
           steps.push({ phase: 'Series', kind: 'rest', name: 'Descanso', duration: fmt.rest, next: lastSet ? main[i + 1].name : ex.name });
@@ -360,7 +374,7 @@ const Generator = (() => {
     steps.push({ phase: 'Vuelta a la calma', kind: 'rest', name: 'Combate superado. A estirar', duration: 15, next: get(session.cooldown[0])?.name });
     session.cooldown.forEach((id, i) => {
       const ex = get(id); if (!ex) return;
-      steps.push({ phase: 'Vuelta a la calma', kind: 'work', exId: id, name: ex.name, desc: ex.desc, duration: STRETCH_SEC, perSide: ex.perSide, label: `${i + 1} de ${session.cooldown.length}` });
+      steps.push({ phase: 'Vuelta a la calma', kind: 'work', exId: id, name: ex.name, desc: howTo(ex), duration: STRETCH_SEC, perSide: ex.perSide, label: `${i + 1} de ${session.cooldown.length}` });
     });
     return steps;
   }

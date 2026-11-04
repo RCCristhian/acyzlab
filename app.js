@@ -93,7 +93,7 @@
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 
   // ---------- Plan de la semana ----------
-  const profileStamp = p => JSON.stringify([p.goal, p.level, p.days, p.minutes, p.equipment, p.space, p.limits, p.style, p.stamina, p.bodyType]);
+  const profileStamp = p => JSON.stringify([p.goal, p.level, p.days, p.minutes, p.equipment, p.space, p.limits, p.style, p.stamina, p.bodyType, Catalog.VERSION]);
 
   function ensurePlan(forceSalt) {
     const p = Store.profile;
@@ -107,7 +107,23 @@
       plan.stamp = profileStamp(p);
       Store.savePlan(plan);
     }
+    prefetchMedia(plan);
     return plan;
+  }
+  // Descarga en segundo plano las fotos de la semana para tenerlas sin internet
+  let prefetched = '';
+  function prefetchMedia(plan) {
+    const key = plan.weekKey + plan.salt + plan.stamp;
+    if (prefetched === key || !('caches' in window)) return;
+    prefetched = key;
+    const urls = new Set();
+    plan.sessions.forEach(s => [...s.exercises, ...s.warmup, ...s.cooldown].forEach(id => {
+      const ex = EXERCISE_BY_ID[id];
+      if (ex && ex.media) { urls.add(`media/${ex.media}/0.jpg`); urls.add(`media/${ex.media}/1.jpg`); }
+    }));
+    const run = () => caches.open('acyzlab-media').then(c => Promise.all([...urls].map(u =>
+      c.match(u).then(hit => hit || fetch(u).then(r => r.ok && c.put(u, r))).catch(() => {})))).catch(() => {});
+    (window.requestIdleCallback || (f => setTimeout(f, 1500)))(run);
   }
   const doneThisWeek = wk => new Set(Store.history.filter(h => h.weekKey === wk).map(h => h.sessionIndex));
   function nextSession(plan) {
@@ -429,7 +445,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
   const authError = e => AUTH_ERRORS[e && e.message] || (e && /password/i.test(e.message) ? 'La contraseña debe tener al menos 6 caracteres.' : 'No se pudo completar. Revisa tu conexión e inténtalo de nuevo.');
 
   async function startApp() {
-    await Store.init(Cloud.enabled && Cloud.user ? CloudAdapter : LocalAdapter);
+    await Promise.all([Store.init(Cloud.enabled && Cloud.user ? CloudAdapter : LocalAdapter), Catalog.load()]);
     applyTheme();
     if (!Store.profile) return startWizard(false);
     tabbar.hidden = true; app.innerHTML = '';
@@ -535,7 +551,9 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       return `<div class="photo ${cls}" role="img" aria-label="${esc(ex.name)}">
         <img src="media/${ex.media}/0.jpg" alt="" loading="lazy" decoding="async"><img src="media/${ex.media}/1.jpg" alt="" loading="lazy" decoding="async"></div>`;
     }
-    return `<div class="${cls}" data-anim="${exId}" data-impl="${implement || ''}"></div>`;
+    const animId = ex && ex.base ? ex.base : exId;
+    if (ex && !Anim.has(animId)) return '';
+    return `<div class="${cls}" data-anim="${animId}" data-impl="${implement || ''}"></div>`;
   }
 
   // ---------- Hoy ----------
@@ -547,6 +565,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     const extra = d.kg ? ` · ${d.kg} kg` : (d.implement && d.implement !== 'ninguno' ? ' · ' + EQUIPMENT_NAMES[d.implement] : '');
     return `<li><details><summary><span class="ex-name">${esc(ex.name)}</span><span class="ex-dose">${amount}${esc(extra)}</span></summary>
       ${visual(ex.id, d.implement, 'anim-box')}
+      ${ex.vtip ? `<p class="var-tip"><b>${esc(ex.vlabel)}:</b> ${esc(ex.vtip)}</p>` : ''}
       <p>${esc(ex.desc)}</p>${d.tip ? `<p class="tip">${esc(d.tip)}</p>` : ''}</details></li>`;
   }
   function sessionCard(s, p, opts = {}) {
@@ -689,12 +708,105 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
           <button class="btn ghost" data-action="edit-equip">Cambiar mi equipo</button>
         </div>
         <div class="card">
+          <h3>Catálogo de técnicas</h3>
+          <p class="muted small">${catalogLine()}. Busca cualquier ejercicio y mira sus fotos y variaciones.</p>
+          <button class="btn ghost" data-action="catalog">Abrir el catálogo</button>
+        </div>
+        <div class="card">
           <h3>¿Quieres otros ejercicios?</h3>
           <p class="muted small">Cada lunes se arma un plan nuevo y variado. Si quieres cambiarlo ya, genera otra versión de esta semana.</p>
           <button class="btn ghost" data-action="reshuffle">Cambiar ejercicios de esta semana</button>
         </div>
       </section>`;
   }
+
+  // ---------- Catálogo ----------
+  const GROUP_NAMES = { piernas: 'Piernas', empuje: 'Empuje', traccion: 'Tracción', core: 'Core', cardio: 'Cardio', calentamiento: 'Calentamiento', estiramiento: 'Estiramiento' };
+  const LEVEL_SHORT = { 1: 'Fácil', 2: 'Medio', 3: 'Difícil' };
+  function catalogLine() {
+    const st = Catalog.stats();
+    return `${fmtN(st.bases)} ejercicios (${fmtN(st.photos)} con foto) y ${fmtN(st.variants)} variaciones`;
+  }
+  const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const CAT = { q: '', group: '', mine: true, shown: 40 };
+  function viewCatalog() {
+    app.innerHTML = `
+      <section class="catalog">
+        <button class="link-btn" data-action="tab" data-tab="plan">← Volver al plan</button>
+        <p class="eyebrow">Biblioteca</p>
+        <h1 class="hero">Catálogo de técnicas</h1>
+        <p class="muted">${catalogLine()}.</p>
+        <div class="card cat-filters">
+          <input type="search" id="cat-q" class="cat-search" placeholder="Busca: sentadilla, remo, banda, glúteos…" value="${esc(CAT.q)}" aria-label="Buscar ejercicio" autocomplete="off">
+          <div class="chips cat-groups" role="radiogroup" aria-label="Tipo de ejercicio">
+            ${[['', 'Todos'], ...Object.entries(GROUP_NAMES)].map(([k, l]) => `<label class="chip"><input type="radio" name="cat-group" value="${k}" ${CAT.group === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}
+          </div>
+          <label class="cat-mine"><input type="checkbox" id="cat-mine" ${CAT.mine ? 'checked' : ''}> Solo los que puedo hacer con mi equipo</label>
+        </div>
+        <p class="muted small" id="cat-count"></p>
+        <ol class="ex-list cat-list" id="cat-list"></ol>
+        <div id="cat-more"></div>
+        <p class="muted small credit">Fotos y datos base: <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noopener">Free Exercise DB</a> (dominio público). Nombres, explicaciones y variaciones: Acyz Lab.</p>
+      </section>`;
+    renderCatalogList();
+  }
+  function catalogResults() {
+    const p = Store.profile;
+    const q = norm(CAT.q).split(/\s+/).filter(Boolean);
+    return EXERCISES.filter(ex => {
+      if (ex.base) return false;
+      if (CAT.group && ex.group !== CAT.group) return false;
+      if (CAT.mine && p && !Generator.allowed(ex, p)) return false;
+      if (!q.length) return true;
+      const hay = norm([ex.name, ex.desc, GROUP_NAMES[ex.group], ...(ex.mus || []), ...ex.equip.map(k => EQUIPMENT_NAMES[k] || k)].join(' '));
+      return q.every(w => hay.includes(w));
+    }).sort((a, b) => (q.length ? norm(b.name).startsWith(q[0]) - norm(a.name).startsWith(q[0]) : 0)
+      || a.level - b.level || a.name.localeCompare(b.name, 'es'));
+  }
+  function renderCatalogList() {
+    const list = $('#cat-list');
+    if (!list) return;
+    const res = catalogResults();
+    $('#cat-count').textContent = res.length ? `${fmtN(res.length)} ejercicios` : `No hay ejercicios con esos filtros. Prueba con otra palabra${CAT.group ? ', elige «Todos»' : ''}${CAT.mine ? ' o quita «Solo los que puedo hacer»' : ''}.`;
+    list.innerHTML = res.slice(0, CAT.shown).map(ex => {
+      const nv = Variations.of(ex.id).length;
+      const eq = ex.equip.map(k => k === 'ninguno' ? 'Sin equipo' : EQUIPMENT_NAMES[k]).join(' o ');
+      return `<li><details data-cat="${ex.id}"><summary><span class="ex-name">${esc(ex.name)}</span>
+        <span class="ex-dose">${LEVEL_SHORT[ex.level]}${nv ? ` · ${nv} var.` : ''}</span></summary>
+        <div class="cat-body"></div><p class="muted small cat-eq">${esc(GROUP_NAMES[ex.group])} · ${esc(eq)}</p></details></li>`;
+    }).join('');
+    $('#cat-more').innerHTML = res.length > CAT.shown
+      ? `<button class="btn ghost block" data-action="cat-more">Ver más (quedan ${fmtN(res.length - CAT.shown)})</button>` : '';
+  }
+  // El contenido (fotos incluidas) se crea solo al abrir cada ejercicio
+  function fillCatalogItem(det) {
+    const body = det.querySelector('.cat-body');
+    if (!body || body.dataset.filled) return;
+    body.dataset.filled = '1';
+    const ex = EXERCISE_BY_ID[det.dataset.cat];
+    const p = Store.profile;
+    const imp = p ? Generator.implementFor(ex, p) : ex.equip[0];
+    const extra = [...(ex.needs || []).map(k => EQUIPMENT_NAMES[k] || k),
+      ...(ex.needsAny ? [ex.needsAny.map(k => EQUIPMENT_NAMES[k] || k).join(' o ')] : [])];
+    const vars = Variations.of(ex.id);
+    body.innerHTML = `${visual(ex.id, imp, 'anim-box')}
+      <p>${esc(ex.desc)}</p>
+      ${ex.mus && ex.mus.length ? `<p class="small"><b>Músculos:</b> ${esc(ex.mus.join(', '))}</p>` : ''}
+      ${extra.length ? `<p class="small"><b>Necesitas también:</b> ${esc(extra.join(', '))}</p>` : ''}
+      ${vars.length ? `<div class="var-list"><p class="small"><b>Variaciones</b></p><ul>${vars.map(v =>
+        `<li><b>${esc(v.vlabel)}</b> <span class="badge">${LEVEL_SHORT[v.level]}</span><br><span class="muted small">${esc(v.vtip)}</span></li>`).join('')}</ul></div>` : ''}`;
+    Anim.mountAll(body);
+  }
+  app.addEventListener('input', e => {
+    if (e.target.id !== 'cat-q') return;
+    CAT.q = e.target.value; CAT.shown = 40;
+    clearTimeout(CAT.t); CAT.t = setTimeout(renderCatalogList, 150);
+  });
+  app.addEventListener('change', e => {
+    if (e.target.name === 'cat-group') { CAT.group = e.target.value; CAT.shown = 40; renderCatalogList(); }
+    if (e.target.id === 'cat-mine') { CAT.mine = e.target.checked; CAT.shown = 40; renderCatalogList(); }
+  });
+  document.addEventListener('toggle', e => { if (e.target.open && e.target.dataset && e.target.dataset.cat) fillCatalogItem(e.target); }, true);
 
   // ---------- Progreso ----------
   function weightChart(ws) {
@@ -1467,6 +1579,8 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
         renderWizard(); break;
       }
       case 'tab': go(el.dataset.tab); break;
+      case 'catalog': viewCatalog(); window.scrollTo(0, 0); break;
+      case 'cat-more': CAT.shown += 40; renderCatalogList(); break;
       case 'start': startWorkout(+el.dataset.index); break;
       case 'reshuffle': {
         const plan = ensurePlan();

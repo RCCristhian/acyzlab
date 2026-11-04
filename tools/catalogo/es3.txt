@@ -1,0 +1,192 @@
+Rack_Pulls|Tirón desde el rack|Con la barra apoyada en el rack a la altura de las rodillas, ponte de pie con la espalda recta.|n=rack;k=0.9;lo=espalda
+Rear_Leg_Raises|Balanceo de pierna atrás|Apoyado en una pared, balancea una pierna estirada hacia atrás y vuelve.|g=calentamiento;ps
+Return_Push_from_Stance|Lanzamiento desde postura atlética|Desde postura atlética con el balón en el pecho, lánzalo al frente con fuerza.|sp=3
+Reverse_Barbell_Curl|Curl invertido con barra|Con las palmas hacia abajo, sube la barra doblando los codos.|k=0.15
+Reverse_Barbell_Preacher_Curls|Curl predicador invertido|En el banco predicador, sube la barra Z con las palmas hacia abajo.|n=banco;k=0.12
+Reverse_Cable_Curl|Curl invertido en polea|En la polea baja, sube la barra con las palmas hacia abajo.|
+Reverse_Crunch|Crunch inverso|Boca arriba, lleva las rodillas al pecho despegando la cadera del suelo y baja despacio.|
+Reverse_Flyes|Pájaros con mancuernas|Inclinado con espalda recta, abre las mancuernas hacia los lados juntando omóplatos.|k=0.04;g=traccion
+Reverse_Flyes_With_External_Rotation|Pájaros con rotación externa|Inclinado, abre las mancuernas hacia los lados y gíralas hacia arriba al final.|k=0.03;g=traccion
+Reverse_Grip_Bent-Over_Rows|Remo con barra agarre supino|Inclinado con las palmas hacia delante, tira de la barra hacia el abdomen.|k=0.45;lo=espalda
+Reverse_Grip_Triceps_Pushdown|Jalón de tríceps agarre invertido|En la polea alta con las palmas arriba, estira los codos hacia abajo.|
+Reverse_Machine_Flyes|Pájaros en máquina|Sentado en el contractor mirando al respaldo, abre los brazos hacia atrás.|eq=poleas;g=traccion
+Reverse_Plate_Curls|Curl con disco|Sujeta un disco por los lados y súbelo doblando los codos.|eq=barradisco
+Reverse_Triceps_Bench_Press|Press de banca agarre invertido|En el banco con las palmas hacia ti, baja la barra al pecho y empuja.|n=banco,rack;k=0.4;l=2
+Rocket_Jump|Salto cohete|Desde media sentadilla, salta lo más alto posible estirando los brazos arriba.|g=cardio
+Rocking_Standing_Calf_Raise|Gemelos balanceando con barra|Con la barra en la espalda, sube a puntillas y luego balancéate sobre los talones.|n=rack;k=0.4
+Romanian_Deadlift|Peso muerto rumano con barra|Barra delante de los muslos, baja inclinando el tronco con la espalda recta y las rodillas algo dobladas.|k=0.6;lo=espalda;g=piernas
+Rope_Crunch|Crunch con cuerda en polea|De rodillas con la cuerda de la polea alta junto a la cabeza, enrolla el tronco hacia abajo.|
+Rope_Straight-Arm_Pulldown|Jalón con brazos estirados con cuerda|Con la cuerda en la polea alta, baja los brazos estirados hasta los muslos.|
+Round_The_World_Shoulder_Stretch|Vuelta al mundo de hombros|Con una toalla o palo en las manos, pasa los brazos estirados por encima y detrás de la cabeza.|eq=ninguno;g=calentamiento
+Runners_Stretch|Estiramiento del corredor|En zancada con las manos en el suelo, estira la pierna de delante llevando la cadera atrás.|ps
+Scapular_Pull-Up|Dominada escapular|Colgado de la barra con brazos estirados, baja los hombros juntando los omóplatos y suelta.|eq=barra
+Scissor_Kick|Tijeras|Boca arriba con las piernas elevadas, crúzalas una sobre otra sin parar.|g=core;t=time
+Seated_Band_Hamstring_Curl|Curl femoral sentado con banda|Sentado con la banda en el tobillo atada delante, dobla la rodilla hacia atrás.|eq=banda;ps
+Seated_Barbell_Military_Press|Press militar sentado con barra|Sentado con la espalda recta, empuja la barra desde los hombros hacia arriba.|n=banco,rack;k=0.35;lo=hombros
+Seated_Barbell_Twist|Giros sentado con barra|Sentado con una barra ligera en la espalda, gira el tronco de un lado a otro.|n=banco;k=0.1
+Seated_Bent-Over_One-Arm_Dumbbell_Triceps_Extension|Patada de tríceps sentado a una mano|Sentado e inclinado, estira el codo llevando la mancuerna hacia atrás.|ps;k=0.03
+Seated_Bent-Over_Rear_Delt_Raise|Pájaros sentado|Sentado al borde e inclinado, abre las mancuernas hacia los lados.|k=0.03;g=traccion
+Seated_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension|Patada de tríceps sentado|Sentado e inclinado, estira los dos codos llevando las mancuernas atrás.|k=0.03
+Seated_Biceps|Estiramiento de bíceps sentado|Sentado con las manos en el suelo detrás, desliza la cadera hacia delante.|l=1
+Seated_Cable_Shoulder_Press|Press de hombro sentado en polea|Sentado entre dos poleas bajas, empuja las asas por encima de la cabeza.|
+Seated_Calf_Raise|Gemelo sentado en máquina|En la máquina de gemelo sentado, sube los talones lo más alto posible.|eq=maqpiernas
+Seated_Calf_Stretch|Estiramiento de gemelo sentado|Sentado con las piernas estiradas, tira de las puntas de los pies hacia ti.|
+Seated_Close-Grip_Concentration_Barbell_Curl|Curl concentrado con barra|Sentado con los codos entre las rodillas, sube la barra con agarre estrecho.|k=0.12
+Seated_Dumbbell_Curl|Curl sentado con mancuernas|Sentado con la espalda recta, sube las mancuernas sin balancearte.|k=0.06
+Seated_Dumbbell_Inner_Biceps_Curl|Curl sentado hacia fuera|Sentado, sube las mancuernas abriendo los brazos hacia los lados.|k=0.05
+Seated_Dumbbell_Palms-Down_Wrist_Curl|Curl de muñeca invertido sentado|Antebrazos sobre los muslos y palmas abajo, sube las mancuernas con la muñeca.|k=0.03;pr=-0.4
+Seated_Dumbbell_Palms-Up_Wrist_Curl|Curl de muñeca sentado|Antebrazos sobre los muslos y palmas arriba, sube las mancuernas con la muñeca.|k=0.04;pr=-0.4
+Seated_Dumbbell_Press|Press sentado con mancuernas|Sentado, empuja las mancuernas desde los hombros hacia arriba.|k=0.08
+Seated_Flat_Bench_Leg_Pull-In|Encogimiento sentado en banco|Sentado al borde del banco, lleva las rodillas al pecho y estíralas sin tocar el suelo.|na=banco,cajon
+Seated_Front_Deltoid|Estiramiento de hombro delantero|Sentado con las manos detrás, inclínate hacia atrás hasta notar la parte delantera del hombro.|l=1
+Seated_Glute|Estiramiento de glúteo sentado|Sentado, cruza una pierna sobre la otra y lleva la rodilla hacia el pecho.|ps;l=1
+Seated_Hamstring|Isquios sentado a una pierna|Sentado con una pierna estirada y la otra doblada, inclínate hacia el pie estirado.|ps;l=1
+Seated_Hamstring_and_Calf_Stretch|Isquios y gemelo sentado|Sentado con una pierna estirada, sujeta el pie con una toalla y tira hacia ti.|eq=ninguno;ps
+Seated_Leg_Curl|Curl femoral sentado|En la máquina, dobla las rodillas llevando el rodillo hacia abajo y atrás.|eq=maqpiernas
+Seated_Leg_Tucks|Encogimientos sentado|Sentado apoyado en las manos, lleva las rodillas al pecho y estíralas.|
+Seated_One-Arm_Dumbbell_Palms-Up_Wrist_Curl|Curl de muñeca a una mano|Antebrazo sobre el muslo, sube la mancuerna con la muñeca.|ps;k=0.04;pr=-0.4
+Seated_One-arm_Cable_Pulley_Rows|Remo sentado a una mano en polea|Sentado, tira de un asa hacia el costado girando un poco el tronco.|ps
+Seated_Overhead_Stretch|Estiramiento sentado con brazos arriba|Sentado, entrelaza los dedos arriba y estírate hacia el techo.|
+Seated_Palm-Up_Barbell_Wrist_Curl|Curl de muñeca sentado con barra|Antebrazos sobre los muslos, sube la barra solo con las muñecas.|k=0.15;pr=-0.4
+Seated_Side_Lateral_Raise|Elevación lateral sentado|Sentado, sube las mancuernas a los lados hasta la altura de los hombros.|k=0.04
+Seated_Triceps_Press|Press francés sentado|Sentado, baja una mancuerna por detrás de la cabeza con las dos manos y estira.|k=0.1
+See-Saw_Press_Alternating_Side_Press|Press balancín con mancuernas|Empuja una mancuerna arriba mientras inclinas un poco el tronco al lado contrario; alterna.|k=0.07
+Shotgun_Row|Remo escopeta en polea|Con un asa de la polea baja, tira hacia el costado girando la palma hacia arriba.|ps
+Shoulder_Circles|Círculos de hombros|Dibuja círculos grandes con los hombros hacia delante y hacia atrás.|g=calentamiento
+Shoulder_Press_-_With_Bands|Press de hombro con banda|Pisa la banda y empuja los extremos desde los hombros hacia arriba.|
+Shoulder_Raise|Elevación de hombros|Sube los hombros hacia las orejas, mantén un segundo y suéltalos.|g=calentamiento
+Side-Lying_Floor_Stretch|Estiramiento lateral en el suelo|Tumbado de lado, estira el brazo de arriba por encima de la cabeza alargando el costado.|ps
+Side_Hop-Sprint|Saltos laterales y sprint|Salta de lado varias veces y sal corriendo hacia delante.|eq=ninguno;g=cardio;sp=3;t=time
+Side_Jackknife|Navaja lateral|Tumbado de lado, sube a la vez el tronco y las piernas juntando codo y rodilla.|ps
+Side_Lateral_Raise|Elevación lateral con mancuernas|Sube las mancuernas a los lados con los codos algo doblados hasta los hombros.|k=0.04
+Side_Laterals_to_Front_Raise|Elevación lateral y frontal|Sube las mancuernas a los lados, bájalas y súbelas al frente.|k=0.03
+Side_Leg_Raises|Balanceo lateral de pierna|De pie apoyado en la pared, balancea una pierna de lado a lado por delante.|g=calentamiento;ps
+Side_Lying_Groin_Stretch|Estiramiento de ingle de lado|Tumbado de lado, sube la pierna de arriba sujetándola por el tobillo.|ps
+Side_Standing_Long_Jump|Salto lateral largo|De lado, salta lo más lejos posible hacia el lado con los dos pies.|g=cardio;sp=3
+Side_To_Side_Chins|Dominada de lado a lado|Sube hacia una mano, baja y sube hacia la otra.|eq=barra;l=3
+Side_to_Side_Box_Shuffle|Pasos laterales sobre cajón|Con un pie en el cajón, salta de lado cambiando de pie por encima del cajón.|eq=ninguno;n=cajon;g=cardio;t=time
+Single-Arm_Cable_Crossover|Cruce de polea a una mano|Con un asa de la polea alta, baja el brazo en arco hasta delante de la cadera contraria.|ps
+Single-Arm_Push-Up|Flexión a una mano|Con las piernas abiertas y una mano en la espalda, baja y sube con un solo brazo.|ps;l=3
+Single-Cone_Sprint_Drill|Sprint alrededor de un cono|Corre rápido hasta un cono, rodéalo y vuelve.|eq=ninguno;g=cardio;sp=3;t=time
+Single-Leg_High_Box_Squat|Sentadilla a una pierna sobre cajón|De pie a una pierna sobre un cajón alto, baja hasta sentarte casi y sube.|eq=ninguno;n=cajon;ps;l=2;lo=rodillas
+Single-Leg_Hop_Progression|Saltos a una pierna|Salta hacia delante sobre una pierna, aterriza estable y repite.|eq=ninguno;g=cardio;sp=3;ps;l=2;lo=rodillas
+Single-Leg_Lateral_Hop|Saltos laterales a una pierna|Salta de lado sobre una pierna y aterriza estable.|eq=ninguno;g=cardio;sp=2;ps;l=2
+Single-Leg_Leg_Extension|Extensión de cuádriceps a una pierna|En la máquina, estira una pierna y baja despacio.|eq=maqpiernas;ps
+Single-Leg_Stride_Jump|Salto a una pierna desde cajón|Con un pie en el cajón, empuja y salta hacia arriba; aterriza en la misma posición.|eq=ninguno;n=cajon;ps;g=piernas
+Single_Dumbbell_Raise|Elevación frontal con una mancuerna|Sujeta una mancuerna con las dos manos y súbela al frente hasta los ojos.|k=0.06
+Single_Leg_Butt_Kick|Talones al glúteo|Corre en el sitio llevando los talones hacia los glúteos.|g=cardio;t=time
+Single_Leg_Push-off|Empuje a una pierna en cajón|Con un pie en el cajón, empuja hacia arriba lo más alto posible y vuelve.|eq=ninguno;n=cajon;ps;g=piernas
+Sit-Up|Abdominal completo|Tumbado con rodillas dobladas, sube el tronco hasta quedar sentado y baja despacio.|
+Sit_Squats|Sentadilla sentado|Desde de pie, baja a sentadilla profunda y quédate abajo abriendo las rodillas con los codos.|g=calentamiento
+Skating|Patinador saltando|Salta de lado a lado aterrizando en una pierna, como un patinador.|eq=ninguno;g=cardio;t=time;sp=2
+Snatch|Arrancada|Desde el suelo, lleva la barra en un solo movimiento hasta arriba con los brazos estirados.|l=3;k=0.3;lo=espalda,hombros,rodillas
+Speed_Band_Overhead_Triceps|Extensión rápida de tríceps con banda|Con la banda detrás, estira los codos por encima de la cabeza rápido.|
+Speed_Squats|Sentadilla rápida con barra|Con poco peso, baja controlado y sube tan rápido como puedas.|n=rack;k=0.4;l=3;lo=rodillas
+Spell_Caster|Lanzador de hechizos|Con una mancuerna en cada mano, llévalas en arco de una cadera al otro lado del cuerpo girando el tronco.|k=0.05;g=core
+Spider_Crawl|Gateo de araña|En plancha, avanza llevando la rodilla hacia el codo del mismo lado en cada paso.|sp=2;l=2
+Spider_Curl|Curl araña|Boca abajo sobre un banco inclinado, sube la barra Z con los brazos colgando.|n=banco;k=0.12
+Spinal_Stretch|Estiramiento de columna|Sentado, gira el tronco hacia un lado mirando por encima del hombro.|ps
+Split_Jump|Salto en zancada|Desde una zancada, salta y cambia de pierna en el aire.|g=cardio;l=2;lo=rodillas
+Split_Squats|Zancada estática de estiramiento|En zancada, baja la cadera lentamente notando el muslo de atrás.|ps
+Squats_-_With_Bands|Sentadilla con banda|Pisa la banda, sujétala en los hombros y haz sentadillas.|
+Standing_Alternating_Dumbbell_Press|Press alterno de pie|De pie, empuja una mancuerna arriba y luego la otra.|k=0.07
+Standing_Barbell_Calf_Raise|Gemelos de pie con barra|Con la barra en la espalda, sube a puntillas y baja despacio.|n=rack;k=0.5
+Standing_Bent-Over_One-Arm_Dumbbell_Triceps_Extension|Patada de tríceps a una mano|Inclinado, estira el codo llevando la mancuerna hacia atrás.|ps;k=0.03
+Standing_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension|Patada de tríceps con dos brazos|Inclinado, estira los dos codos llevando las mancuernas hacia atrás.|k=0.03
+Standing_Biceps_Stretch|Estiramiento de bíceps de pie|Con las manos entrelazadas detrás, estira los brazos y súbelos un poco.|eq=ninguno
+Standing_Bradford_Press|Press Bradford de pie|Con la barra, pasa de los hombros por delante a la nuca por encima de la cabeza.|k=0.2;lo=hombros
+Standing_Cable_Chest_Press|Press de pecho de pie en polea|De espaldas a las poleas, empuja las asas al frente en zancada.|
+Standing_Cable_Lift|Elevación en diagonal en polea|Desde la polea baja, sube el asa en diagonal hasta encima del hombro contrario.|ps;g=core
+Standing_Cable_Wood_Chop|Leñador en polea|Desde la polea alta, baja el asa en diagonal hasta la cadera contraria girando el tronco.|ps;g=core
+Standing_Calf_Raises|Gemelos de pie en máquina|En la máquina, sube a puntillas y baja estirando.|eq=maqpiernas
+Standing_Concentration_Curl|Curl concentrado de pie|Inclinado con el brazo colgando, sube la mancuerna hacia el hombro.|ps;k=0.05
+Standing_Dumbbell_Reverse_Curl|Curl invertido con mancuernas|Con las palmas hacia abajo, sube las mancuernas doblando los codos.|k=0.05
+Standing_Dumbbell_Straight-Arm_Front_Delt_Raise_Above_Head|Elevación frontal hasta arriba|Sube las mancuernas al frente con los brazos estirados hasta encima de la cabeza.|k=0.03
+Standing_Dumbbell_Upright_Row|Remo al cuello con mancuernas|Tira de las mancuernas hacia la barbilla con los codos por delante.|k=0.07;g=traccion;lo=hombros
+Standing_Elevated_Quad_Stretch|Cuádriceps con pie elevado|Apoya el empeine detrás en una silla y lleva la cadera hacia delante.|eq=ninguno;ps
+Standing_Front_Barbell_Raise_Over_Head|Elevación frontal con barra|Sube la barra con los brazos estirados hasta encima de la cabeza.|k=0.1
+Standing_Gastrocnemius_Calf_Stretch|Estiramiento de gemelo en escalón|Con la punta en un escalón, deja caer el talón hacia abajo.|ps
+Standing_Hamstring_and_Calf_Stretch|Isquio y gemelo de pie|Pie adelantado con la punta arriba, inclínate hacia él con la espalda recta.|eq=ninguno;ps
+Standing_Hip_Flexors|Flexor de cadera de pie|En zancada, aprieta el glúteo de atrás y lleva la cadera adelante.|ps
+Standing_Inner-Biceps_Curl|Curl de pie hacia fuera|De pie, sube las mancuernas abriendo los brazos hacia los lados.|k=0.05
+Standing_Lateral_Stretch|Estiramiento lateral de pie|Sube un brazo e inclina el tronco hacia el lado contrario.|ps
+Standing_Leg_Curl|Curl femoral de pie|En la máquina, dobla una rodilla llevando el talón al glúteo.|eq=maqpiernas;ps
+Standing_Long_Jump|Salto de longitud|Desde parado, balancea los brazos y salta lo más lejos posible.|g=cardio;sp=3
+Standing_Low-Pulley_Deltoid_Raise|Elevación lateral en polea baja|De lado a la polea baja, sube el brazo hacia el lado hasta el hombro.|ps
+Standing_Low-Pulley_One-Arm_Triceps_Extension|Extensión de tríceps a una mano en polea baja|De espaldas a la polea baja, estira el codo por encima de la cabeza.|ps
+Standing_Military_Press|Press militar de pie con barra|De pie, empuja la barra desde los hombros hasta estirar los brazos.|n=rack;k=0.35;lo=hombros
+Standing_Olympic_Plate_Hand_Squeeze|Pinza con un disco|Sujeta un disco con los dedos por el borde, brazo estirado al lado.|eq=barradisco;t=time;pr=-0.4;g=traccion
+Standing_One-Arm_Cable_Curl|Curl a una mano en polea|Con un asa de la polea baja, sube la mano doblando el codo.|ps
+Standing_One-Arm_Dumbbell_Curl_Over_Incline_Bench|Curl a una mano sobre banco inclinado|Con el brazo sobre el respaldo de un banco inclinado, sube la mancuerna.|n=banco;ps;k=0.05
+Standing_One-Arm_Dumbbell_Triceps_Extension|Extensión de tríceps de pie a una mano|De pie, baja la mancuerna detrás de la cabeza y estira el codo.|ps;k=0.04
+Standing_Overhead_Barbell_Triceps_Extension|Extensión de tríceps con barra de pie|Con la barra arriba, bájala detrás de la cabeza doblando los codos.|k=0.12
+Standing_Palm-In_One-Arm_Dumbbell_Press|Press a una mano palma dentro|De pie, empuja una mancuerna arriba con la palma mirando a la cabeza.|ps;k=0.08
+Standing_Palms-In_Dumbbell_Press|Press de pie palmas enfrentadas|De pie, empuja las mancuernas arriba con las palmas mirándose.|k=0.07
+Standing_Pelvic_Tilt|Basculación de pelvis de pie|De pie con las rodillas algo dobladas, mete y saca la pelvis despacio.|g=calentamiento
+Standing_Rope_Crunch|Crunch de pie con cuerda|De espaldas a la polea alta, enrolla el tronco hacia abajo con la cuerda.|
+Standing_Soleus_And_Achilles_Stretch|Estiramiento de sóleo y tendón de Aquiles|En zancada corta, dobla las dos rodillas con los talones en el suelo.|ps
+Standing_Toe_Touches|Tocar los pies de pie|De pie, inclínate hacia delante e intenta tocar los pies con las rodillas suaves.|
+Standing_Towel_Triceps_Extension|Extensión de tríceps con toalla|Con una toalla detrás de la cabeza, tira con la mano de abajo mientras estiras el codo de arriba.|ps
+Standing_Two-Arm_Overhead_Throw|Lanzamiento por encima de la cabeza|Sube el balón por encima de la cabeza y lánzalo con fuerza al frente contra una pared.|sp=2;g=cardio
+Stiff-Legged_Barbell_Deadlift|Peso muerto piernas rígidas con barra|Con las piernas casi estiradas, baja la barra con la espalda recta y vuelve.|k=0.5;lo=espalda;g=piernas
+Stiff_Leg_Barbell_Good_Morning|Buenos días piernas rígidas|Con la barra en la espalda y las piernas casi rectas, inclina el tronco hacia delante.|n=rack;k=0.25;lo=espalda;g=piernas
+Stomach_Vacuum|Vacío abdominal|Suelta todo el aire y mete el ombligo hacia dentro todo lo que puedas; aguanta.|g=core;t=time
+Straight-Arm_Dumbbell_Pullover|Pullover con brazos estirados|Tumbado en el banco, lleva la mancuerna con los brazos estirados por detrás de la cabeza.|n=banco;k=0.12;g=traccion
+Straight-Arm_Pulldown|Jalón con brazos estirados|En la polea alta, baja la barra con los brazos estirados hasta los muslos.|
+Straight_Raises_on_Incline_Bench|Elevaciones en banco inclinado con barra|Boca abajo en un banco inclinado, sube la barra al frente con los brazos estirados.|n=banco;k=0.08
+Sumo_Deadlift|Peso muerto sumo|Piernas muy abiertas y manos por dentro, levanta la barra empujando el suelo.|k=0.9;lo=espalda;g=piernas
+Supine_Chest_Throw|Lanzamiento de pecho tumbado|Tumbado, lanza el balón desde el pecho hacia arriba y recógelo.|g=empuje
+Supine_One-Arm_Overhead_Throw|Lanzamiento tumbado a una mano|Tumbado con el balón detrás de la cabeza, sube el tronco y lánzalo con una mano.|ps;g=core
+Supine_Two-Arm_Overhead_Throw|Lanzamiento tumbado con dos manos|Tumbado con el balón detrás de la cabeza, sube el tronco y lánzalo al frente.|g=core
+Suspended_Fallout|Caída al frente en TRX|De rodillas o de pie con las asas, deja caer el cuerpo al frente estirando los brazos y vuelve.|eq=trx;l=2
+Suspended_Reverse_Crunch|Crunch inverso en TRX|Con los pies en las asas en plancha, lleva las rodillas al pecho.|eq=trx
+Suspended_Row|Remo en TRX|Inclinado hacia atrás con las asas, tira del pecho hacia las manos.|eq=trx
+Svend_Press|Press Svend con disco|Aprieta un disco entre las palmas delante del pecho y empújalo al frente.|eq=barradisco
+T-Bar_Row_with_Handle|Remo en T con asa|Con la barra en una esquina y un asa en el otro extremo, rema hacia el pecho.|k=0.4;lo=espalda
+Tate_Press|Press Tate|Tumbado, baja las mancuernas hacia el pecho doblando los codos hacia fuera y estira.|n=banco;k=0.05
+The_Straddle|Estiramiento con piernas abiertas|Sentado con las piernas muy abiertas, inclínate hacia delante con la espalda larga.|
+Thigh_Abductor|Abductores en máquina|Sentado en la máquina, abre las piernas contra la resistencia.|eq=maqpiernas
+Thigh_Adductor|Aductores en máquina|Sentado en la máquina, cierra las piernas contra la resistencia.|eq=maqpiernas
+Toe_Touchers|Toques de punta|Boca arriba con las piernas arriba, sube el tronco para tocar los pies.|g=core
+Torso_Rotation|Giro de tronco en fitball|Boca arriba con los pies sobre el fitball, deja caer las rodillas a un lado y otro.|g=calentamiento
+Trail_Running_Walking|Carrera suave al aire libre|Corre o camina rápido por un parque o sendero a ritmo que puedas mantener.|eq=ninguno;sp=3;t=time
+Tricep_Dumbbell_Kickback|Patada de tríceps|Inclinado con el codo pegado, estira el brazo hacia atrás y aprieta.|k=0.03
+Tricep_Side_Stretch|Estiramiento lateral de tríceps|Lleva un brazo doblado detrás de la cabeza y empuja el codo con la otra mano.|ps
+Triceps_Overhead_Extension_with_Rope|Extensión de tríceps con cuerda por encima|De espaldas a la polea, estira los codos con la cuerda por encima de la cabeza.|
+Triceps_Pushdown|Jalón de tríceps|En la polea alta con barra, estira los codos hacia abajo sin mover los brazos.|
+Triceps_Pushdown_-_V-Bar_Attachment|Jalón de tríceps con barra en V|En la polea alta con la barra en V, estira los codos hacia abajo.|
+Triceps_Stretch|Estiramiento de tríceps tras la cabeza|Sube un brazo, dobla el codo y empújalo suave hacia abajo con la otra mano.|ps
+Tuck_Crunch|Crunch encogido|Boca arriba con las rodillas al pecho, despega los hombros hacia las rodillas.|
+Two-Arm_Dumbbell_Preacher_Curl|Curl predicador con mancuernas|Con los brazos sobre el apoyo, sube las dos mancuernas a la vez.|n=banco;k=0.05
+Two-Arm_Kettlebell_Clean|Cargada con dos manos con pesa rusa|Sujeta una pesa con las dos manos y súbela al pecho con impulso de cadera.|k=0.15
+Two-Arm_Kettlebell_Jerk|Envión con pesa rusa a dos manos|Con la pesa en el pecho, flexiona y empújala arriba con las dos manos.|k=0.12;l=3
+Two-Arm_Kettlebell_Military_Press|Press militar con dos pesas rusas|Con dos pesas en los hombros, empújalas arriba a la vez.|k=0.08;lo=hombros
+Two-Arm_Kettlebell_Row|Remo con dos pesas rusas|Inclinado, tira de las dos pesas hacia la cadera.|k=0.12
+Underhand_Cable_Pulldowns|Jalón supino|En la polea alta con las palmas hacia ti, tira de la barra hasta el pecho.|
+Upper_Back-Leg_Grab|Agarre de piernas|De pie con las rodillas dobladas, sujeta las piernas por detrás y redondea la espalda.|
+Upper_Back_Stretch|Estiramiento de espalda alta|Entrelaza las manos delante y empuja hacia fuera redondeando la espalda.|
+Upright_Barbell_Row|Remo al cuello con barra|Tira de la barra hacia la barbilla con los codos por delante.|k=0.25;g=traccion;lo=hombros
+Upright_Cable_Row|Remo al cuello en polea|Con la barra de la polea baja, tira hasta la barbilla con los codos altos.|g=traccion
+Upright_Row_-_With_Bands|Remo al cuello con banda|Pisa la banda y tira hacia la barbilla con los codos altos.|g=traccion
+Upward_Stretch|Estiramiento hacia arriba|De puntillas, estira los brazos hacia el techo y alarga todo el cuerpo.|
+V-Bar_Pulldown|Jalón con barra en V|En la polea alta con la barra en V, tira hacia el pecho inclinándote un poco.|
+V-Bar_Pullup|Dominada con barra en V|Con un agarre neutro estrecho en la barra, sube el pecho hacia ella.|eq=barra;l=3
+Vertical_Swing|Swing vertical con mancuerna|Sujeta una mancuerna con las dos manos y balancéala hasta encima de la cabeza con la cadera.|k=0.12;g=piernas
+Walking_Treadmill|Caminar en cinta inclinada|Camina rápido en la cinta con algo de inclinación, sin sujetarte.|eq=cinta;t=time
+Weighted_Ball_Hyperextension|Extensión de espalda en fitball|Boca abajo con la cadera sobre el fitball y los pies apoyados, sube el pecho.|g=traccion
+Weighted_Ball_Side_Bend|Inclinación lateral en fitball|Tumbado de lado sobre el fitball, sube el tronco hacia el techo.|ps
+Weighted_Bench_Dip|Fondos en banco con disco|Con las manos en un banco y un disco sobre los muslos, baja doblando los codos y sube.|eq=barradisco;n=banco;l=2;lo=hombros
+Weighted_Crunches|Crunch con balón medicinal|Tumbado con el balón en el pecho, despega los hombros del suelo con el abdomen.|
+Weighted_Jump_Squat|Sentadilla con salto con barra|Con una barra ligera en la espalda, baja y salta; aterriza suave.|n=rack;k=0.2;l=3;lo=rodillas
+Weighted_Pull_Ups|Dominada lastrada|Con peso extra en un cinturón o mochila, sube la barbilla por encima de la barra.|eq=barra;l=3
+Wide-Grip_Barbell_Bench_Press|Press de banca agarre abierto|En el banco con las manos abiertas, baja la barra al pecho y empuja.|n=banco,rack;k=0.55;lo=hombros
+Wide-Grip_Decline_Barbell_Bench_Press|Press declinado agarre abierto|En banco declinado con las manos abiertas, baja la barra y empuja.|n=banco,rack;k=0.55
+Wide-Grip_Standing_Barbell_Curl|Curl con barra agarre abierto|De pie con las manos abiertas, sube la barra doblando los codos.|k=0.2
+Wide_Stance_Barbell_Squat|Sentadilla abierta con barra|Barra en la espalda y piernas muy abiertas, baja con las rodillas hacia fuera.|n=rack;k=0.6;lo=rodillas
+Wide_Stance_Stiff_Legs|Peso muerto rígido con piernas abiertas|Piernas abiertas y casi estiradas, baja la barra con la espalda recta.|k=0.45;lo=espalda;g=piernas
+Windmills|Molinos|De pie con las piernas abiertas y los brazos en cruz, toca un pie con la mano contraria.|g=calentamiento
+Worlds_Greatest_Stretch|El mejor estiramiento del mundo|En zancada, pon la mano en el suelo junto al pie y gira el tronco subiendo el otro brazo.|g=calentamiento;ps
+Wrist_Circles|Círculos de muñeca|Junta las manos y dibuja círculos con las muñecas en los dos sentidos.|g=calentamiento
+Zercher_Squats|Sentadilla Zercher|Con la barra en el pliegue de los codos, baja en sentadilla con el tronco erguido.|n=rack;k=0.4;l=3;lo=rodillas
+Zottman_Curl|Curl Zottman|Sube las mancuernas con las palmas hacia arriba y bájalas con las palmas hacia abajo.|k=0.05
+Zottman_Preacher_Curl|Curl Zottman predicador|En el banco predicador, sube con la palma arriba y baja con la palma abajo.|n=banco;k=0.05
