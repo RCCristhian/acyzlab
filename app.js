@@ -727,7 +727,7 @@
       o.start(); o.stop(ctx.currentTime + ms / 1000 + 0.02);
     } catch { /* sin audio */ }
   }
-  const vibrate = pattern => { if (Store.settings.sound && navigator.vibrate) try { navigator.vibrate(pattern); } catch { /* */ } };
+  const vibrate = pattern => { if (Store.settings.sound && navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) try { navigator.vibrate(pattern); } catch { /* */ } };
 
   async function lockScreen() {
     try { if ('wakeLock' in navigator) W.lock = await navigator.wakeLock.request('screen'); } catch { /* no disponible */ }

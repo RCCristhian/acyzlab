@@ -84,7 +84,7 @@ const Pin = (() => {
         fails++;
         root.classList.add('error');
         msg.textContent = text;
-        if (navigator.vibrate) try { navigator.vibrate([60, 40, 60]); } catch { /* */ }
+        if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) try { navigator.vibrate([60, 40, 60]); } catch { /* */ }
         await wait(500);
         root.classList.remove('error');
         code = ''; input.value = ''; busy = false; paint();
@@ -110,7 +110,7 @@ const Pin = (() => {
             const s = 4 + Math.random() * 7;
             return `<i style="--dx:${(Math.cos(a) * r).toFixed(1)}px;--dy:${(Math.sin(a) * r).toFixed(1)}px;--c:${c};width:${s.toFixed(1)}px;height:${s.toFixed(1)}px;border-radius:${Math.random() < .5 ? '50%' : '2px'};animation-delay:${Math.floor(Math.random() * 90)}ms"></i>`;
           }).join('');
-          if (navigator.vibrate) try { navigator.vibrate(40); } catch { /* */ }
+          if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) try { navigator.vibrate(40); } catch { /* */ }
           await wait(500);
         } else {
           root.classList.add('merge', 'burst');
