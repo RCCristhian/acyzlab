@@ -11,6 +11,7 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 - **Personaje y misiones** (inspirado en apps tipo «leveling», con diseño propio): ventana de estado con nivel, experiencia (XP), rango, poder y cuatro estadísticas (Fuerza, Agilidad, Resistencia, Voluntad). Cada entreno es una **misión** con recompensa.
 - **Misiones sorpresa**: si sueles entrenar de tarde o noche, aparecen por la mañana (5:00 a 9:00); si entrenas de mañana, por la noche (19:00 a 23:59). Son más probables tras un entreno ligero. Son ejercicios suaves (flexiones, sentadillas, plancha, bici estática…) según tu equipo, y dan XP y estadísticas.
 - **Rival y entrenar juntos**: elige a un amigo como rival, invítale a entrenar a la vez y veréis en directo una barra con el progreso de los dos. Da XP extra.
+- **Avisos con la app cerrada**: en Perfil → «Activar avisos». Te llega «⚠ ¡Misión sorpresa!» en tu franja y «⚔ ¡Te han retado!» cuando tu rival te invita. En iPhone hace falta añadir la app a la pantalla de inicio primero.
 - **Cuestionario inicial**: objetivo, edad, sexo, peso, estatura, tu historia de origen (día a día, cómo responde tu cuerpo, horas de sueño), nivel, días por semana, minutos por sesión, estilo de lucha (aguante y qué poder quieres despertar), equipo (mancuernas y pesas rusas con sus kilos, barra con discos, barra Z, rack, banco, cajón, barra de dominadas, paralelas, TRX, banda, cuerda, rueda abdominal, balón medicinal, fitball, saco de boxeo, poleas, máquinas de piernas, bici estática, cinta, elíptica y remo), espacio disponible y, si quieres, limitaciones, máximos de flexiones o sentadillas y % de grasa. Calcula el IMC, el metabolismo basal y las calorías orientativas.
 - **121 ejercicios** con descripción. 100 de ellos con **fotos reales** que se alternan como un mini vídeo (de Free Exercise DB, dominio público); el resto con animación de figura.
 - **Plan semanal** que cambia cada semana: cuerpo completo, superior/inferior o empuje/tracción/piernas según los días. Usa circuitos por tiempo o series y repeticiones según el objetivo. Solo usa el equipo que marcaste y respeta tu espacio y tus limitaciones. Además te dice qué peso usar.
@@ -28,7 +29,7 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 **Ya está conectado:** proyecto de Supabase **CC17**, tabla `acyzlab_user_data`, entrada con correo y con Google (proyecto de Google Cloud «Acyz Lab», en producción). Estos pasos sirven si algún día hay que montarlo de nuevo en otro proyecto:
 
 1. En [supabase.com](https://supabase.com) crea un proyecto.
-2. **SQL Editor → New query**: pega `supabase/schema.sql` y pulsa **Run**; luego haz lo mismo con `supabase/amigos.sql` y `supabase/duelos.sql`. Crea la tabla y las reglas para que cada persona solo vea lo suyo.
+2. **SQL Editor → New query**: pega `supabase/schema.sql` y pulsa **Run**; luego haz lo mismo con `supabase/amigos.sql`, `supabase/duelos.sql` y `supabase/avisos.sql`. Publica `supabase/functions/acyzlab-push` como Edge Function con «Verify JWT» apagado (la función comprueba la sesión por su cuenta). Crea la tabla y las reglas para que cada persona solo vea lo suyo.
 3. **Authentication → URL Configuration**:
    - En *Site URL* pon `https://rccristhian.github.io/acyzlab/`.
    - En *Redirect URLs* añade esa misma dirección y `http://localhost:8765/`.
@@ -56,6 +57,8 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 | `leveling.js` | Nivel, XP, estadísticas y misiones sorpresa |
 | `media/` | Fotos reales de los ejercicios (Free Exercise DB, dominio público) |
 | `supabase/duelos.sql` | Tabla y reglas de seguridad para entrenar juntos |
+| `supabase/avisos.sql` | Tablas de avisos y tarea automática cada 10 minutos |
+| `supabase/functions/acyzlab-push/` | Servidor de avisos (Edge Function de Supabase) |
 | `privacidad.html`, `terminos.html`, `legal.css` | Política de privacidad y condiciones de uso (las pide Google) |
 | `vendor/supabase.js` | Librería oficial de Supabase (v2.110.0, licencia MIT) |
 | `manifest.json`, `sw.js`, `icons/` | Instalación como app y uso sin internet |
