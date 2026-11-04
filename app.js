@@ -587,6 +587,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
         <h1 class="hero">${hello}</h1>
         ${statusHTML()}
         ${questCardHTML()}
+        ${rivalCardHTML()}
         <div class="speed quote-card"><p>«${esc(quote(Math.floor(Date.now() / 864e5)))}»</p></div>
         <div class="week-bar card">
           <div class="row"><b>Esta semana</b><span>${done.size} de ${plan.sessions.length} sesiones</span></div>
@@ -944,6 +945,116 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     viewHoy();
   }
 
+  // ---------- Rival y entrenar juntos ----------
+  const rivalOf = () => (Cloud.user && Store.settings.rival) || null;
+  function rivalCardHTML() {
+    const rv = rivalOf();
+    if (!rv) return '';
+    const mine = powerOf(), theirs = rv.power || 0;
+    return `<section class="sys rival-card">
+      <p class="sys-tag">Tu rival</p>
+      <div class="vs-mini"><div><b>${esc(playerName())}</b><span>${mine.toLocaleString('es')}</span></div><em>VS</em><div><b>${esc(rv.name)}</b><span>${theirs.toLocaleString('es')}</span></div></div>
+      <p class="small muted center">${mine >= theirs ? '¡Vas por delante! No bajes la guardia.' : '¡Tu rival tiene más poder! Hoy es el día de superarle.'}</p>
+      <button class="btn primary block" data-action="duel-invite">⚔ Entrenar juntos</button>
+    </section>`;
+  }
+  const duelIndex = () => { const plan = ensurePlan(); return (nextSession(plan) || plan.sessions[0]).index; };
+  let duelWaitTimer = null;
+  async function inviteRival() {
+    const rv = rivalOf();
+    if (!rv) return;
+    let duel;
+    try { duel = await Social.invite(rv.id); }
+    catch (e) { console.warn(e); toast('No se pudo enviar la invitación. ¿Seguís siendo amigos?'); return; }
+    closeVs();
+    const ov = document.createElement('div');
+    ov.id = 'duel-wait'; ov.className = 'overlay-center';
+    ov.innerHTML = `<div class="sys quest-pop center">
+      <p class="sys-tag">⚔ Desafío enviado</p>
+      <h2>Esperando a ${esc(rv.name)}…</h2>
+      <p class="muted">Le ha llegado tu invitación. En cuanto acepte, empezáis los dos a la vez.</p>
+      <div class="duel-spinner" aria-hidden="true"></div>
+      <button class="btn ghost" data-action="duel-cancel">Cancelar</button></div>`;
+    document.body.appendChild(ov);
+    const startedAt = Date.now();
+    clearInterval(duelWaitTimer);
+    duelWaitTimer = setInterval(async () => {
+      try {
+        const d = await Social.getDuel(duel.id);
+        if (d.status === 'accepted') { stopDuelWait(); startWorkout(duelIndex(), { id: d.id, role: 'challenger', rivalName: rv.name }); }
+        else if (d.status === 'declined') { stopDuelWait(); toast(`${rv.name} no puede ahora. ¡Inténtalo más tarde!`); }
+        else if (Date.now() - startedAt > 5 * 60000) { stopDuelWait(); Social.updateDuel(d.id, { status: 'cancelled' }).catch(() => {}); toast('Tu rival no respondió a tiempo.'); }
+      } catch (e) { console.warn(e); }
+    }, 3000);
+    ov.dataset.duel = duel.id;
+  }
+  function stopDuelWait() { clearInterval(duelWaitTimer); $('#duel-wait')?.remove(); }
+
+  // invitaciones recibidas
+  const seenInvites = new Set();
+  async function checkInvites() {
+    if (!Cloud.user || !Store.profile || W.session || Pin.isOpen() || $('#duel-invite') || $('#duel-wait') || document.visibilityState !== 'visible') return;
+    try {
+      const list = await Social.pendingInvites();
+      const inv = list.find(x => !seenInvites.has(x.id));
+      if (!inv) return;
+      seenInvites.add(inv.id);
+      const ov = document.createElement('div');
+      ov.id = 'duel-invite'; ov.className = 'overlay-center';
+      ov.innerHTML = `<div class="sys quest-pop center">
+        <p class="sys-tag">⚔ Desafío recibido</p>
+        <h2>¡${esc(inv.name)} te reta a entrenar juntos!</h2>
+        <p class="muted">Cada uno hace su sesión a la vez y veréis vuestro progreso en directo. Ganas XP extra.</p>
+        <div class="row-btns center-btns">
+          <button class="btn ghost" data-action="duel-decline" data-id="${inv.id}">Ahora no</button>
+          <button class="btn primary" data-action="duel-accept" data-id="${inv.id}" data-name="${esc(inv.name)}">Aceptar el reto</button>
+        </div></div>`;
+      document.body.appendChild(ov);
+      beep(660, 120); setTimeout(() => beep(990, 200), 140);
+    } catch (e) { /* sin conexión */ }
+  }
+  setInterval(checkInvites, 10000);
+
+  // progreso en vivo durante el entreno
+  let duelPoll = null;
+  function duelBarHTML() {
+    if (!W.duel) return '';
+    const myPct = Math.round(W.i / W.steps.length * 100);
+    return `<div class="duel-bars" id="duel-bars">
+      <div><span>Tú</span><div class="bar"><i id="duel-me" style="width:${myPct}%"></i></div><b id="duel-me-pct">${myPct}%</b></div>
+      <div class="rival"><span>${esc(W.duel.rivalName)}</span><div class="bar"><i id="duel-rv" style="width:${W.duel.rivalPct || 0}%"></i></div><b id="duel-rv-pct">${W.duel.rivalPct || 0}%</b></div>
+      <p class="small muted" id="duel-note">${W.duel.note || ''}</p></div>`;
+  }
+  function paintDuel() {
+    if (!W.duel) return;
+    const me = Math.round(W.i / W.steps.length * 100);
+    const set = (id, v) => { const el = $('#' + id); if (el) { if (el.tagName === 'I') el.style.width = v + '%'; else el.textContent = v + '%'; } };
+    set('duel-me', me); set('duel-me-pct', me); set('duel-rv', W.duel.rivalPct || 0); set('duel-rv-pct', W.duel.rivalPct || 0);
+    const n = $('#duel-note'); if (n) n.textContent = W.duel.note || '';
+  }
+  function pushDuel(force) {
+    if (!W.duel) return;
+    const pct = Math.round(W.i / W.steps.length * 100);
+    if (!force && (Date.now() - (W.duel.pushedAt || 0) < 2500 || pct === W.duel.pushedPct)) return;
+    W.duel.pushedAt = Date.now(); W.duel.pushedPct = pct;
+    Social.updateDuel(W.duel.id, { [W.duel.role + '_pct']: pct }).catch(() => {});
+  }
+  function startDuelPoll() {
+    clearInterval(duelPoll);
+    duelPoll = setInterval(async () => {
+      if (!W.duel) return clearInterval(duelPoll);
+      pushDuel(); // por si avanzaste rápido entre pasos
+      try {
+        const d = await Social.getDuel(W.duel.id);
+        const other = W.duel.role === 'challenger' ? 'rival' : 'challenger';
+        W.duel.rivalPct = d[other + '_pct'];
+        W.duel.rivalDone = d[other + '_done'];
+        W.duel.note = d.status === 'cancelled' ? `${W.duel.rivalName} abandonó el duelo. ¡Termina tú!` : W.duel.rivalDone ? `¡${W.duel.rivalName} ya terminó!` : '';
+        paintDuel();
+      } catch (e) { /* sin conexión: seguimos */ }
+    }, 3000);
+  }
+
   // ---------- Amigos ----------
   const GOAL_SHORT = { grasa: 'Perder grasa', musculo: 'Ganar músculo', fuerza: 'Fuerza', resistencia: 'Resistencia', forma: 'En forma' };
   let social = null;
@@ -962,6 +1073,12 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     try {
       await Social.publish(buildStats(), Store.settings.nickname);
       social = await Social.load();
+      const rv = rivalOf();
+      if (rv) {
+        const f = social.friends.find(x => x.profile.user_id === rv.id);
+        if (f) Store.saveSettings({ rival: { id: rv.id, name: f.profile.display_name, power: (f.profile.stats || {}).power || 0 } });
+        else Store.saveSettings({ rival: null }); // ya no es tu amigo
+      }
     } catch (e) {
       console.warn(e);
       app.innerHTML = `<section><h1 class="hero">Amigos</h1><div class="card"><h3>Sin conexión</h3>
@@ -988,7 +1105,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
             return `<li class="${x.isMe ? 'me' : ''}" ${x.isMe ? '' : `data-action="vs" data-id="${x.id}" role="button" tabindex="0"`}>
               <span class="pos">${i + 1}</span>
               <span class="avatar">${initial(x.profile.display_name)}</span>
-              <span class="who"><b>${esc(x.profile.display_name)}${x.isMe ? ' (tú)' : ''}</b><small>Rango ${esc(s.rank || 'E')} · ${fmtN(s.week)} esta semana · racha ${fmtN(s.streak)}</small></span>
+              <span class="who"><b>${esc(x.profile.display_name)}${x.isMe ? ' (tú)' : ''}${!x.isMe && rivalOf() && rivalOf().id === x.profile.user_id ? ' <span class="badge rival-badge">Rival</span>' : ''}</b><small>Rango ${esc(s.rank || 'E')} · ${fmtN(s.week)} esta semana · racha ${fmtN(s.streak)}</small></span>
               <span class="pow"><b>${fmtN(s.power)}</b><small>poder</small></span>
             </li>`;
           }).join('')}</ol>
@@ -1061,6 +1178,9 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
             : '<p class="muted small">Todavía no ha terminado ninguna sesión.</p>'}
           ${b.goal ? `<p class="muted small">Objetivo: ${esc(GOAL_SHORT[b.goal] || b.goal)}</p>` : ''}
         </div>
+        ${rivalOf() && rivalOf().id === f.profile.user_id
+          ? `<button class="btn primary block" data-action="duel-invite">⚔ Entrenar juntos ahora</button><p class="muted small center">${name} es tu rival.</p>`
+          : `<button class="btn primary block" data-action="set-rival" data-uid="${f.profile.user_id}" data-name="${name}" data-power="${b.power || 0}">Elegir como mi rival</button>`}
         <button class="link-btn vs-remove" data-action="friend-remove" data-id="${f.id}" data-confirm="1">Quitar de amigos</button>
       </div>`;
     document.body.appendChild(ov);
@@ -1109,7 +1229,9 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       o.start(); o.stop(ctx.currentTime + ms / 1000 + 0.02);
     } catch { /* sin audio */ }
   }
-  const vibrate = pattern => { if (Store.settings.sound && navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) try { navigator.vibrate(pattern); } catch { /* */ } };
+  let realTouch = false; // solo vibrar tras un toque real de la persona
+  document.addEventListener('pointerdown', e => { if (e.isTrusted) realTouch = true; }, true);
+  const vibrate = pattern => { if (Store.settings.sound && navigator.vibrate && realTouch) try { navigator.vibrate(pattern); } catch { /* */ } };
 
   async function lockScreen() {
     try { if ('wakeLock' in navigator) W.lock = await navigator.wakeLock.request('screen'); } catch { /* no disponible */ }
@@ -1117,11 +1239,13 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
   function releaseLock() { try { W.lock && W.lock.release(); } catch { /* */ } W.lock = null; }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && W.session && !W.lock) lockScreen(); });
 
-  function startWorkout(index) {
+  function startWorkout(index, duel = null) {
     const plan = ensurePlan();
     const s = plan.sessions.find(x => x.index === index);
     if (!s) return;
     W.session = s;
+    W.duel = duel;
+    if (duel) startDuelPoll();
     W.steps = Generator.buildSteps(s, Store.profile);
     W.i = 0;
     W.startedAt = Date.now();
@@ -1140,6 +1264,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     if (st.duration) { W.remaining = st.duration; W.running = true; W.endAt = Date.now() + W.remaining * 1000; }
     else { W.running = false; }
     renderWorkout();
+    pushDuel();
     clearInterval(W.timer);
     if (st.duration) W.timer = setInterval(tick, 200);
   }
@@ -1191,6 +1316,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
         <button class="icon-btn" data-action="w-close" aria-label="Salir">${ICON.close}</button>
         <div class="w-progress"><div class="row small"><span>${esc(st.phase === 'prep' ? 'Empezamos' : st.phase)}</span><span>${pct}%</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
       </div>
+      ${duelBarHTML()}
       <div class="w-body">
         <p class="eyebrow">${esc(st.phase === 'prep' ? 'Empezamos en' : isRest ? 'Recupera energía' : st.label || '')}</p>
         <h2 class="w-name">${esc(st.name)}</h2>
@@ -1221,6 +1347,9 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
 
   function closeWorkout() {
     clearInterval(W.timer);
+    clearInterval(duelPoll);
+    if (W.duel && !W.duel.finished) Social.updateDuel(W.duel.id, { status: 'cancelled' }).catch(() => {});
+    W.duel = null;
     releaseLock();
     W.session = null;
     $('#workout')?.remove();
@@ -1237,10 +1366,19 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     const reward = Leveling.sessionReward({ minutes, exercises: W.session.exercises, feedback: 'bien', duel: !!W.duel });
     const lvBefore = lvl().level;
     const lvAfter = Leveling.progress(Store.history.concat({ minutes, exercises: W.session.exercises, feedback: 'bien', duel: !!W.duel }), Store.quests).level;
+    let duelLine = '';
+    if (W.duel) {
+      W.duel.finished = true;
+      clearInterval(duelPoll);
+      const first = !W.duel.rivalDone;
+      duelLine = `<p class="rank-up">${first ? `⚔ ¡Terminaste antes que ${esc(W.duel.rivalName)}!` : `⚔ ${esc(W.duel.rivalName)} terminó primero. ¡La próxima es tuya!`} <small>(+40 XP por entrenar juntos)</small></p>`;
+      Social.updateDuel(W.duel.id, { [W.duel.role + '_pct']: 100, [W.duel.role + '_done']: new Date().toISOString(), ...(W.duel.rivalDone ? { status: 'finished' } : {}) }).catch(() => {});
+    }
     ov.className = 'finish speed burst';
     ov.innerHTML = `
       <div class="w-body center">
         <p class="sys-tag">Misión completada</p>
+        ${duelLine}
         <h2 class="w-name">¡Límite superado! 🔥</h2>
         <p class="reward big">+${reward.xp} XP · +${reward.stats.fuerza} FUE · +${reward.stats.agilidad} AGI · +${reward.stats.resistencia} RES · +${reward.stats.voluntad} VOL</p>
         ${lvAfter > lvBefore ? `<p class="rank-up">¡SUBISTE DE NIVEL! Nivel ${lvBefore} → <b>${lvAfter}</b></p>` : ''}
@@ -1264,6 +1402,7 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
     Store.addSession({
       id: Date.now().toString(36), date: new Date().toISOString(), weekKey: weekKeyOf(), sessionIndex: W.session.index,
       title: W.session.title, minutes: W.minutes, feedback: v, exercises: W.session.exercises, intensity: before,
+      ...(W.duel ? { duel: true, rival: W.duel.rivalName } : {}),
     });
     closeWorkout();
     toast({ facil: '¡Tu poder crece! La próxima será más exigente.', bien: 'Buen ritmo. Seguimos subiendo poco a poco.', dificil: 'Lo diste todo. La próxima será algo más suave para que sigas creciendo.' }[v]);
@@ -1358,6 +1497,27 @@ ${Cloud.providers.google ? `<button class="btn google block" data-action="auth-g
       }
       case 'quest-later': closeQuestPopup(); if (tab === 'hoy') viewHoy(); break;
       case 'quest-task': toggleQuestTask(+el.dataset.i); break;
+      case 'set-rival':
+        Store.saveSettings({ rival: { id: el.dataset.uid, name: el.dataset.name, power: +el.dataset.power || 0 } });
+        closeVs(); toast(`${el.dataset.name} es ahora tu rival. ¡Que empiece la batalla!`); viewAmigos(); break;
+      case 'duel-invite': inviteRival(); break;
+      case 'duel-cancel': {
+        const id = $('#duel-wait')?.dataset.duel; stopDuelWait();
+        if (id) Social.updateDuel(id, { status: 'cancelled' }).catch(() => {});
+        break;
+      }
+      case 'duel-accept': {
+        const id = +el.dataset.id, name = el.dataset.name;
+        $('#duel-invite')?.remove();
+        Social.updateDuel(id, { status: 'accepted' })
+          .then(() => startWorkout(duelIndex(), { id, role: 'rival', rivalName: name }))
+          .catch(() => toast('No se pudo aceptar el reto.'));
+        break;
+      }
+      case 'duel-decline':
+        $('#duel-invite')?.remove();
+        Social.updateDuel(+el.dataset.id, { status: 'declined' }).catch(() => {});
+        break;
       case 'vs': openVs(el.dataset.id); break;
       case 'vs-close': closeVs(); break;
       case 'friend-add':

@@ -67,5 +67,33 @@ const Social = (() => {
     if (error) throw error;
   }
 
-  return { publish, load, find, request, accept, remove, displayNameOf };
+  // ---------- Entrenar juntos (duelos) ----------
+  const DUEL_COLS = 'id, challenger, rival, status, challenger_pct, rival_pct, challenger_done, rival_done, created_at, updated_at';
+  async function invite(rivalId) {
+    const { data, error } = await db().from('acyzlab_duels').insert({ challenger: me().id, rival: rivalId }).select(DUEL_COLS).single();
+    if (error) throw error;
+    return data;
+  }
+  async function getDuel(id) {
+    const { data, error } = await db().from('acyzlab_duels').select(DUEL_COLS).eq('id', id).single();
+    if (error) throw error;
+    return data;
+  }
+  async function updateDuel(id, fields) {
+    const { error } = await db().from('acyzlab_duels').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+  }
+  /** Invitaciones recibidas en los últimos 15 minutos, con el nombre de quien reta. */
+  async function pendingInvites() {
+    const since = new Date(Date.now() - 15 * 60000).toISOString();
+    const { data, error } = await db().from('acyzlab_duels').select(DUEL_COLS)
+      .eq('rival', me().id).eq('status', 'invited').gte('created_at', since).order('created_at', { ascending: false });
+    if (error) throw error;
+    if (!data.length) return [];
+    const { data: prof } = await db().from('acyzlab_profiles').select('user_id, display_name').in('user_id', data.map(d => d.challenger));
+    const names = Object.fromEntries((prof || []).map(p => [p.user_id, p.display_name]));
+    return data.map(d => ({ ...d, name: names[d.challenger] || 'Tu rival' }));
+  }
+
+  return { publish, load, find, request, accept, remove, displayNameOf, invite, getDuel, updateDuel, pendingInvites };
 })();
