@@ -12,6 +12,7 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 - **62 ejercicios + calentamiento y estiramientos**, cada uno con descripción y animación propia.
 - **Plan semanal** que cambia cada semana: cuerpo completo, superior/inferior o empuje/tracción/piernas según los días. Usa circuitos por tiempo o series y repeticiones según el objetivo. Solo usa el equipo que marcaste y respeta tu espacio y tus limitaciones. Además te dice qué peso usar.
 - **Modo entrenamiento** paso a paso, con temporizador, sonido, vibración, pantalla siempre encendida y barra de progreso. Al final pregunta «¿cómo te fue?» y ajusta tu «nivel de poder» (la intensidad).
+- **Amigos**: busca a tus amigos por su correo (el de Google o el que registraron), envía o acepta solicitudes y compite en un **ranking de poder**. El cara a cara (VS) compara poder, sesiones, minutos, racha e intensidad, y muestra sus últimas clases. Cada uno elige su nombre de luchador. Solo tus amigos ven tus estadísticas.
 - **Progreso**: rangos de E a SSS, racha semanal, tu rival (tú de la semana pasada), registro de batallas, peso con gráfico y copia de seguridad para exportar e importar.
 
 ## Cómo abrirla
@@ -24,7 +25,7 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 **Ya está conectado:** proyecto de Supabase **CC17**, tabla `acyzlab_user_data`, entrada con correo y con Google (proyecto de Google Cloud «Acyz Lab», en producción). Estos pasos sirven si algún día hay que montarlo de nuevo en otro proyecto:
 
 1. En [supabase.com](https://supabase.com) crea un proyecto.
-2. **SQL Editor → New query**: pega `supabase/schema.sql` y pulsa **Run**. Crea la tabla y las reglas para que cada persona solo vea lo suyo.
+2. **SQL Editor → New query**: pega `supabase/schema.sql` y pulsa **Run**; luego haz lo mismo con `supabase/amigos.sql`. Crea la tabla y las reglas para que cada persona solo vea lo suyo.
 3. **Authentication → URL Configuration**:
    - En *Site URL* pon `https://rccristhian.github.io/acyzlab/`.
    - En *Redirect URLs* añade esa misma dirección y `http://localhost:8765/`.
@@ -47,6 +48,8 @@ Entrenador personal con estilo anime shonen: hace un plan semanal a tu medida y 
 | `storage.js` | Guardado: en el dispositivo o en Supabase |
 | `config.js` | Dirección y clave pública de Supabase |
 | `supabase/schema.sql` | Tabla y reglas de seguridad de la base de datos |
+| `supabase/amigos.sql` | Tablas, búsqueda y reglas de seguridad de amigos |
+| `social.js` | Amigos, solicitudes y ranking de poder |
 | `privacidad.html`, `terminos.html`, `legal.css` | Política de privacidad y condiciones de uso (las pide Google) |
 | `vendor/supabase.js` | Librería oficial de Supabase (v2.110.0, licencia MIT) |
 | `manifest.json`, `sw.js`, `icons/` | Instalación como app y uso sin internet |
